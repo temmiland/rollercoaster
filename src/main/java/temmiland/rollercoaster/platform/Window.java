@@ -212,6 +212,31 @@ public class Window {
 	}
 
 	/**
+	 * Applies the given display mode immediately via {@code glfwSetWindowMonitor}.
+	 * Switches between windowed and fullscreen mode, or resizes the window in windowed mode.
+	 * A resize event is dispatched by GLFW and picked up on the next {@link #update()} call,
+	 * which sets {@link #hasResized()} to {@code true}.
+	 *
+	 * @param cFullscreen {@code true} to switch to fullscreen on the primary monitor;
+	 *                    {@code false} to switch to windowed mode at the given resolution
+	 * @param cWidth      desired width in pixels (windowed mode only)
+	 * @param cHeight     desired height in pixels (windowed mode only)
+	 */
+	public void applyDisplayMode(final boolean cFullscreen, final int cWidth, final int cHeight) {
+		this.fullscreen = cFullscreen;
+		if (cFullscreen) {
+			final long monitor = glfwGetPrimaryMonitor();
+			final GLFWVidMode vid = glfwGetVideoMode(monitor);
+			glfwSetWindowMonitor(this.window, monitor, 0, 0, vid.width(), vid.height(), vid.refreshRate());
+		} else {
+			final GLFWVidMode vid = glfwGetVideoMode(glfwGetPrimaryMonitor());
+			final int x = (vid.width() - cWidth) / 2;
+			final int y = (vid.height() - cHeight) / 2;
+			glfwSetWindowMonitor(this.window, 0L, x, y, cWidth, cHeight, GLFW_DONT_CARE);
+		}
+	}
+
+	/**
 	 * Returns whether the window is in fullscreen mode.
 	 *
 	 * @return {@code true} if the window is in fullscreen mode
