@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-03
+
+### Added
+
+- **CI** — Maven Central publish workflow with GPG signing (`release` Maven profile), sources JAR, and Javadoc JAR
+
+### Changed
+
+- `groupId` renamed from `temmiland` to `land.temmi` (Maven coordinate: `land.temmi:rollercoaster`)
+- POM enriched with mandatory Central metadata: `name`, `description`, `url`, `licenses`, `developers`, `scm`
+- GitHub Packages publish workflow replaced by Maven Central publish workflow
+
 ## [0.1.1] - 2026-06-03
 
 ### Added
@@ -40,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed package `configuration` → `config` and `platform.io` → `platform.input`
 - Moved `debug` and `rendering` out of the `game` sub-package into dedicated top-level packages
 
-[Unreleased]: https://github.com/temmiland/rollercoaster/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/temmiland/rollercoaster/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/temmiland/rollercoaster/releases/tag/v0.1.0
+[Unreleased]: https://github.com/temmiland/rollercoaster/compare/0.1.2...HEAD
+[0.1.1]: https://github.com/temmiland/rollercoaster/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/temmiland/rollercoaster/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/temmiland/rollercoaster/releases/tag/0.1.0
