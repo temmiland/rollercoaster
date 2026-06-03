@@ -6,7 +6,7 @@
 
     <groupId>temmiland</groupId>
     <artifactId>rollercoaster</artifactId>
-    <version>0.0.1d</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
 
     <properties>
