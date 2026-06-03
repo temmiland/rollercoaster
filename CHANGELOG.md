@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-03
+
+### Added
+
+- **CI** — Gitea `release-sync` workflow (mirrors Gitea releases to GitHub via API using `GH_TOKEN`)
+- **CHANGELOG.md** — this file
+
+### Changed
+
+- Gitea `build-artifacts` workflow aligned with pxWorlds pattern: Linux-only build, `upload-artifact@v3`, no tag trigger
+- GitHub Packages workflow restricted to `*` tag pushes only
+
 ## [0.1.0] - 2026-06-03
 
 ### Added
@@ -28,5 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed package `configuration` → `config` and `platform.io` → `platform.input`
 - Moved `debug` and `rendering` out of the `game` sub-package into dedicated top-level packages
 
-[Unreleased]: https://github.com/temmiland/rollercoaster/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/temmiland/rollercoaster/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/temmiland/rollercoaster/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/temmiland/rollercoaster/releases/tag/v0.1.0
