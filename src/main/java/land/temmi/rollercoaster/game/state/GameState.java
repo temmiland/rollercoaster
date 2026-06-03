@@ -12,6 +12,8 @@ import land.temmi.rollercoaster.platform.Window;
  * <p>Required template methods ({@link #onInit}, {@link #onUpdate}, {@link #onRender})
  * must be implemented by every subclass. All other {@code on*} methods have no-op
  * defaults and may be overridden as needed.</p>
+ *
+ * @param <M> the concrete {@link GameStateManager} type that owns this state
  */
 public abstract class GameState<M extends GameStateManager<M>> {
 
@@ -49,52 +51,68 @@ public abstract class GameState<M extends GameStateManager<M>> {
 	}
 
 	/** Delegates to {@link #onResize()}. Called when the window is resized. */
-	public final void resize()                       { onResize(); }
+	public final void resize() {
+		onResize();
+	}
 
 	/**
 	 * Delegates to {@link #onUpdate(double)}.
 	 *
 	 * @param delta time elapsed since the last tick in seconds
 	 */
-	public final void update(final double delta)     { onUpdate(delta); }
+	public final void update(final double delta) {
+		onUpdate(delta);
+	}
 
 	/**
 	 * Delegates to {@link #onRender(float)}.
 	 *
 	 * @param alpha interpolation factor between the last two ticks (0..1)
 	 */
-	public final void render(final float alpha)      { onRender(alpha); }
+	public final void render(final float alpha) {
+		onRender(alpha);
+	}
 
 	/**
 	 * Delegates to {@link #onRenderGui(float)}.
 	 *
 	 * @param alpha interpolation factor between the last two ticks (0..1)
 	 */
-	public final void renderGui(final float alpha)   { onRenderGui(alpha); }
+	public final void renderGui(final float alpha) {
+		onRenderGui(alpha);
+	}
 
 	/**
 	 * Delegates to {@link #onRenderDebug(float)}.
 	 *
 	 * @param alpha interpolation factor between the last two ticks (0..1)
 	 */
-	public final void renderDebug(final float alpha) { onRenderDebug(alpha); }
+	public final void renderDebug(final float alpha) {
+		onRenderDebug(alpha);
+	}
 
 	/** Delegates to {@link #onSave()}. Called when the game loop exits. */
-	public final void save()                         { onSave(); }
+	public final void save() {
+		onSave();
+	}
 
 	/**
 	 * Returns the debug text lines provided by {@link #onDebugLines()}.
 	 *
 	 * @return array of debug lines; never {@code null}
 	 */
-	public final String[] getDebugLines()            { return onDebugLines(); }
+	public final String[] getDebugLines() {
+		return onDebugLines();
+	}
 
 	/**
 	 * Returns whether the debug overlay should be shown, as reported by {@link #onDebugOverlayEnabled()}.
 	 *
 	 * @return {@code true} if the debug overlay is enabled for this state
 	 */
-	public final boolean isDebugOverlayEnabled()     { return onDebugOverlayEnabled(); }
+	public final boolean isDebugOverlayEnabled() {
+		return onDebugOverlayEnabled();
+	}
 
 	// -------------------------------------------------------------------------
 	// Required template methods
@@ -150,7 +168,9 @@ public abstract class GameState<M extends GameStateManager<M>> {
 	 *
 	 * @return array of debug lines
 	 */
-	protected String[] onDebugLines() { return new String[0]; }
+	protected String[] onDebugLines() {
+		return new String[0];
+	}
 
 	/**
 	 * Returns whether the debug overlay should be shown for this state.
@@ -158,5 +178,7 @@ public abstract class GameState<M extends GameStateManager<M>> {
 	 *
 	 * @return {@code true} to show the debug overlay
 	 */
-	protected boolean onDebugOverlayEnabled() { return true; }
+	protected boolean onDebugOverlayEnabled() {
+		return true;
+	}
 }

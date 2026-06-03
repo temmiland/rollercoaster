@@ -28,10 +28,13 @@ import static org.lwjgl.glfw.GLFW.glfwTerminate;
  *
  * <p>Subclasses implement game-specific logic via template methods.
  * {@link #run()} controls the entire lifetime of the game.
+ *
+ * @param <T> the concrete {@link GameStateManager} subtype used by this game
  */
 public abstract class Game<T extends GameStateManager<T>> {
 
-	private static final Logger logger = LoggerFactory.getLogger(Game.class);
+	/** Logger for this class. */
+	private static final Logger LOGGER = LoggerFactory.getLogger(Game.class);
 
 	/** Window reference for rendering and input. */
 	protected final Window window;
@@ -80,7 +83,7 @@ public abstract class Game<T extends GameStateManager<T>> {
 			initGameState();
 			runGameLoop();
 		} catch (Exception e) {
-			logger.error("Uncaught exception during game execution", e);
+			LOGGER.error("Uncaught exception during game execution", e);
 			throw new RuntimeException("Game error", e);
 		} finally {
 			cleanup();

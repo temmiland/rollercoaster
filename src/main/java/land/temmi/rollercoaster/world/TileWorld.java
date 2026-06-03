@@ -134,12 +134,20 @@ public class TileWorld implements AutoCloseable {
     // -------------------------------------------------------------------------
     // Listeners
 
-    /** Registers a listener to be notified on tile changes. */
+    /**
+     * Registers a listener to be notified on tile changes.
+     *
+     * @param listener the listener to add
+     */
     public void addListener(final WorldListener listener) {
         listeners.add(listener);
     }
 
-    /** Removes a previously registered listener. */
+    /**
+     * Removes a previously registered listener.
+     *
+     * @param listener the listener to remove
+     */
     public void removeListener(final WorldListener listener) {
         listeners.remove(listener);
     }
@@ -184,10 +192,18 @@ public class TileWorld implements AutoCloseable {
         float x = camera.getPosition().x;
         float y = camera.getPosition().y;
 
-        if (x > -halfVW + scale)      { x = -halfVW + scale; }
-        if (x < w + halfVW + scale)   { x =  w + halfVW + scale; }
-        if (y < halfVH - scale)       { y = halfVH - scale; }
-        if (y > h - halfVH - scale)   { y = h - halfVH - scale; }
+        if (x > -halfVW + scale) {
+            x = -halfVW + scale;
+        }
+        if (x < w + halfVW + scale) {
+            x = w + halfVW + scale;
+        }
+        if (y < halfVH - scale) {
+            y = halfVH - scale;
+        }
+        if (y > h - halfVH - scale) {
+            y = h - halfVH - scale;
+        }
 
         camera.setPosition(x, y);
     }
@@ -258,7 +274,11 @@ public class TileWorld implements AutoCloseable {
         }
     }
 
-    /** Replaces the sprite registry (e.g. after a resource reload). Marks all chunks dirty. */
+    /**
+     * Replaces the sprite registry (e.g. after a resource reload). Marks all chunks dirty.
+     *
+     * @param registry the new sprite registry (index = tile ID)
+     */
     public void setRegistry(final Sprite[] registry) {
         this.registry = registry;
         markAllChunksDirty();
@@ -268,34 +288,54 @@ public class TileWorld implements AutoCloseable {
     // Accessors
 
     /** @return world width in tiles */
-    public int getWidth()  { return width; }
+    public int getWidth() {
+        return width;
+    }
 
     /** @return world height in tiles */
-    public int getHeight() { return height; }
+    public int getHeight() {
+        return height;
+    }
 
     /** @return number of chunks horizontally */
-    public int getChunkCountX() { return chunkCountX; }
+    public int getChunkCountX() {
+        return chunkCountX;
+    }
 
     /** @return number of chunks vertically */
-    public int getChunkCountY() { return chunkCountY; }
+    public int getChunkCountY() {
+        return chunkCountY;
+    }
 
     /** @return tile size in world-space units */
-    public float getTileSize() { return tileSize; }
+    public float getTileSize() {
+        return tileSize;
+    }
 
     /** @return the world transform matrix */
-    public Matrix4f getWorldMatrix() { return worldMatrix; }
+    public Matrix4f getWorldMatrix() {
+        return worldMatrix;
+    }
 
     /** @return viewport half-range in tiles (horizontal) — updated by {@link #calculateView} */
-    public int getViewX() { return viewX; }
+    public int getViewX() {
+        return viewX;
+    }
 
     /** @return viewport half-range in tiles (vertical) — updated by {@link #calculateView} */
-    public int getViewY() { return viewY; }
+    public int getViewY() {
+        return viewY;
+    }
 
     /** @return number of chunks rendered in the last frame */
-    public int getLastRenderedChunks() { return lastRenderedChunks; }
+    public int getLastRenderedChunks() {
+        return lastRenderedChunks;
+    }
 
     /** @return number of chunks rebuilt in the last frame */
-    public int getLastRebuiltChunks()  { return lastRebuiltChunks; }
+    public int getLastRebuiltChunks() {
+        return lastRebuiltChunks;
+    }
 
     /** Releases all OpenGL resources of the chunks. Must be called on the GL thread. */
     @Override

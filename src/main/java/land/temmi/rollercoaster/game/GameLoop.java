@@ -34,9 +34,14 @@ import java.util.function.IntSupplier;
  */
 public final class GameLoop {
 
+	/** Logger for this class. */
 	private static final Logger LOGGER = LoggerFactory.getLogger(GameLoop.class);
 
+	/** Shared empty array returned when no debug lines are active, avoids repeated allocation. */
 	private static final String[] NO_DEBUG_LINES = new String[0];
+
+	/** Nanoseconds per second; used to convert the coarse sleep duration. */
+	private static final long NANOS_PER_SECOND = 1_000_000_000L;
 
 	/**
 	 * Frame-time floor (~1000 fps) used when VSync is on. Guards against a CPU busy-loop
@@ -131,8 +136,13 @@ public final class GameLoop {
 		// immediately and the loop would otherwise run unbounded. Capping at the monitor
 		// refresh rate makes the software sleep a no-op where hardware VSync works, and a
 		// correct frame limiter where it does not.
-		final int    refreshRate    = window.getRefreshRate();
-		final double vsyncFrameTime = refreshRate > 0 ? 1.0 / refreshRate : MIN_FRAME_TIME;
+		final int refreshRate = window.getRefreshRate();
+		final double vsyncFrameTime;
+		if (refreshRate > 0) {
+			vsyncFrameTime = 1.0 / refreshRate;
+		} else {
+			vsyncFrameTime = MIN_FRAME_TIME;
+		}
 
 		double tickAccumulator = 0;
 		double frameTime       = 0;
@@ -196,9 +206,12 @@ public final class GameLoop {
 			gsm.renderGui(alpha);
 
 			if (debugHud != null && gsm.isDebugOverlayEnabled()) {
-				final String[] debugLines = debugHud.isShowDetailed()
-						? gsm.getDebugLines()
-						: NO_DEBUG_LINES;
+				final String[] debugLines;
+				if (debugHud.isShowDetailed()) {
+					debugLines = gsm.getDebugLines();
+				} else {
+					debugLines = NO_DEBUG_LINES;
+				}
 				debugHud.render(window, alpha, debugLines);
 			}
 
@@ -218,10 +231,15 @@ public final class GameLoop {
 			// the sleep is a no-op, where it did not (e.g. macOS) it caps to the refresh rate.
 			// Without VSync, the target is the configured fpsRate budget; an fpsRate of 0 means
 			// uncapped, so the loop renders as fast as the hardware allows (no sleep).
-			final int    fps             = fpsRate.getAsInt();
-			final double targetFrameTime = vsyncEnabled.getAsBoolean()
-					? vsyncFrameTime
-					: (fps > 0 ? 1.0 / fps : 0.0);
+			final int fps = fpsRate.getAsInt();
+			final double targetFrameTime;
+			if (vsyncEnabled.getAsBoolean()) {
+				targetFrameTime = vsyncFrameTime;
+			} else if (fps > 0) {
+				targetFrameTime = 1.0 / fps;
+			} else {
+				targetFrameTime = 0.0;
+			}
 			sleepUntilFrameTime(now, targetFrameTime);
 		}
 
@@ -242,7 +260,7 @@ public final class GameLoop {
 	private static void sleepUntilFrameTime(final double frameStart, final double targetFrameTime) {
 		final double coarseRemaining = targetFrameTime - (Timer.getTime() - frameStart) - BUSY_SPIN_MARGIN;
 		if (coarseRemaining > 0) {
-			LockSupport.parkNanos((long) (coarseRemaining * 1_000_000_000L));
+			LockSupport.parkNanos((long) (coarseRemaining * NANOS_PER_SECOND));
 		}
 		while (Timer.getTime() - frameStart < targetFrameTime) {
 			Thread.onSpinWait();

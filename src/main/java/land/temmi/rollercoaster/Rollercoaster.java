@@ -57,7 +57,7 @@ public class Rollercoaster {
     public static void run(Class<? extends Game<?>> gameClass, String configDirectory) {
         initialize(configDirectory);
         try {
-            Game<?> game = gameClass
+            final Game<?> game = gameClass
                     .getDeclaredConstructor(Window.class, ConfigurationStorage.class)
                     .newInstance(window, configurationStorage);
             window.createWindow();
@@ -101,8 +101,8 @@ public class Rollercoaster {
      * @param configDirectory the directory from which configuration files are loaded
      */
     private static void createConfigurationStorage(String configDirectory) {
-        Gson gson = new GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create();
-        JsonConfig jsonConfig = new JsonConfig(gson, configDirectory);
+        final Gson gson = new GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create();
+        final JsonConfig jsonConfig = new JsonConfig(gson, configDirectory);
         configurationStorage = new ConfigurationStorage(jsonConfig);
     }
 
@@ -140,7 +140,7 @@ public class Rollercoaster {
      * @throws NullPointerException if the configuration storage has not been initialized
      */
     private static void prepareWindow() {
-        ScreenConfiguration screenConfiguration = configurationStorage.getScreenConfiguration();
+        final ScreenConfiguration screenConfiguration = configurationStorage.getScreenConfiguration();
         window = new Window(screenConfiguration.getLastWidth(), screenConfiguration.getLastHeight());
         window.setFullscreen(screenConfiguration.isFullscreen());
     }

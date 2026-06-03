@@ -112,9 +112,10 @@ public class InputProcessor {
 	 * @return {@code true} only in the tick the key was first pressed
 	 */
 	public boolean wasPressed(final Key key) {
-		return key.isMouseButton()
-				? pressedMouseButtonsThisTick.contains(key.code())
-				: pressedThisTick.contains(key.code());
+		if (key.isMouseButton()) {
+			return pressedMouseButtonsThisTick.contains(key.code());
+		}
+		return pressedThisTick.contains(key.code());
 	}
 
 	/**
@@ -150,9 +151,10 @@ public class InputProcessor {
 	 * @return {@code true} for as long as the key is held
 	 */
 	public boolean isHeld(final Key key) {
-		return key.isMouseButton()
-				? heldMouseButtons.contains(key.code())
-				: heldKeys.contains(key.code());
+		if (key.isMouseButton()) {
+			return heldMouseButtons.contains(key.code());
+		}
+		return heldKeys.contains(key.code());
 	}
 
 	/**

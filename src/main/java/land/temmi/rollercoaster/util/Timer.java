@@ -10,6 +10,7 @@ package land.temmi.rollercoaster.util;
  */
 public final class Timer {
 
+    /** Nanoseconds per second; used to convert {@link System#nanoTime()} to seconds. */
     private static final long NANOSECONDS_PER_SECOND = 1_000_000_000L;
 
     private Timer() { }

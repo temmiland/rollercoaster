@@ -8,6 +8,8 @@ import java.util.function.Function;
  *
  * <p>Descriptors are registered with a {@link GameStateManager} at startup and are used
  * as type-safe handles when switching between states at runtime.</p>
+ *
+ * @param <M> the concrete {@link GameStateManager} type this descriptor belongs to
  */
 public final class GameStateDescriptor<M extends GameStateManager<M>> {
 

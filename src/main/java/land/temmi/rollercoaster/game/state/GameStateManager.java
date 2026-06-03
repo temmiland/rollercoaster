@@ -4,6 +4,7 @@ import land.temmi.rollercoaster.platform.Window;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.glClear;
@@ -22,7 +23,7 @@ import static org.lwjgl.opengl.GL11.glViewport;
 public abstract class GameStateManager<M extends GameStateManager<M>> {
 
 	/** All registered states, keyed by their descriptor name. */
-	protected HashMap<String, GameState<?>> gameStates;
+	protected Map<String, GameState<?>> gameStates;
 	/** Name of the currently active state. */
 	protected String currentState;
 	/** The GLFW window, available after {@link #init(Window)}. */

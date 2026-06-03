@@ -181,7 +181,11 @@ public class Window {
 	 * @param enabled {@code true} to enable VSync, {@code false} to disable it
 	 */
 	public void setVSync(final boolean enabled) {
-		glfwSwapInterval(enabled ? 1 : 0);
+		if (enabled) {
+			glfwSwapInterval(1);
+		} else {
+			glfwSwapInterval(0);
+		}
 	}
 
 	// -------------------------------------------------------------------------
@@ -298,7 +302,10 @@ public class Window {
 	 */
 	public int getRefreshRate() {
 		final GLFWVidMode vid = glfwGetVideoMode(glfwGetPrimaryMonitor());
-		return vid != null ? vid.refreshRate() : 0;
+		if (vid != null) {
+			return vid.refreshRate();
+		}
+		return 0;
 	}
 
 	/**
