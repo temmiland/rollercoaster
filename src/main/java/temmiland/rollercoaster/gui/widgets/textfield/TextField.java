@@ -48,16 +48,16 @@ public final class TextField {
 	/**
 	 * Creates a new {@code TextField}.
 	 *
-	 * @param cCx centre X in GUI coordinates
-	 * @param cCy centre Y in GUI coordinates
-	 * @param cHw half-width
-	 * @param cHh half-height
+	 * @param cx centre X in GUI coordinates
+	 * @param cy centre Y in GUI coordinates
+	 * @param hw half-width
+	 * @param hh half-height
 	 */
-	public TextField(final float cCx, final float cCy, final float cHw, final float cHh) {
-		this.cx = cCx;
-		this.cy = cCy;
-		this.hw = cHw;
-		this.hh = cHh;
+	public TextField(final float cx, final float cy, final float hw, final float hh) {
+		this.cx = cx;
+		this.cy = cy;
+		this.hw = hw;
+		this.hh = hh;
 	}
 
 	// -------------------------------------------------------------------------

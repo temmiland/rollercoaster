@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.platform.io;
+package temmiland.rollercoaster.platform.input;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN;
 
@@ -34,7 +34,9 @@ public final class InputEvent {
 		 * A printable Unicode character was typed (via the GLFW char callback).
 		 * Not fired for non-printable keys such as Backspace or arrow keys.
 		 */
-		CHAR_TYPED
+		CHAR_TYPED,
+		/** The mouse scroll wheel was scrolled. */
+		SCROLL
 	}
 
 	// -------------------------------------------------------------------------
@@ -53,6 +55,10 @@ public final class InputEvent {
 	private final double mouseY;
 	/** Unicode code point of the typed character (relevant for {@link Type#CHAR_TYPED} only). */
 	private final int codepoint;
+	/** Scroll offset X (relevant for {@link Type#SCROLL} only). */
+	private final double scrollX;
+	/** Scroll offset Y (relevant for {@link Type#SCROLL} only). */
+	private final double scrollY;
 
 	// -------------------------------------------------------------------------
 	// Constructor
@@ -64,13 +70,17 @@ public final class InputEvent {
 			final int eventMouseButton,
 			final double eventMouseX,
 			final double eventMouseY,
-			final int eventCodepoint) {
+			final int eventCodepoint,
+			final double eventScrollX,
+			final double eventScrollY) {
 		this.type = eventType;
 		this.keyCode = eventKeyCode;
 		this.mouseButton = eventMouseButton;
 		this.mouseX = eventMouseX;
 		this.mouseY = eventMouseY;
 		this.codepoint = eventCodepoint;
+		this.scrollX = eventScrollX;
+		this.scrollY = eventScrollY;
 	}
 
 	// -------------------------------------------------------------------------
@@ -84,7 +94,7 @@ public final class InputEvent {
 	 * @return a new {@code KEY_DOWN} event
 	 */
 	public static InputEvent keyDown(final int eventKeyCode) {
-		return new InputEvent(Type.KEY_DOWN, eventKeyCode, -1, 0, 0, 0);
+		return new InputEvent(Type.KEY_DOWN, eventKeyCode, -1, 0, 0, 0, 0, 0);
 	}
 
 	/**
@@ -94,7 +104,7 @@ public final class InputEvent {
 	 * @return a new {@code KEY_UP} event
 	 */
 	public static InputEvent keyUp(final int eventKeyCode) {
-		return new InputEvent(Type.KEY_UP, eventKeyCode, -1, 0, 0, 0);
+		return new InputEvent(Type.KEY_UP, eventKeyCode, -1, 0, 0, 0, 0, 0);
 	}
 
 	/**
@@ -109,7 +119,7 @@ public final class InputEvent {
 			final int button,
 			final double eventMouseX,
 			final double eventMouseY) {
-		return new InputEvent(Type.MOUSE_PRESS, GLFW_KEY_UNKNOWN, button, eventMouseX, eventMouseY, 0);
+		return new InputEvent(Type.MOUSE_PRESS, GLFW_KEY_UNKNOWN, button, eventMouseX, eventMouseY, 0, 0, 0);
 	}
 
 	/**
@@ -124,7 +134,7 @@ public final class InputEvent {
 			final int button,
 			final double eventMouseX,
 			final double eventMouseY) {
-		return new InputEvent(Type.MOUSE_RELEASE, GLFW_KEY_UNKNOWN, button, eventMouseX, eventMouseY, 0);
+		return new InputEvent(Type.MOUSE_RELEASE, GLFW_KEY_UNKNOWN, button, eventMouseX, eventMouseY, 0, 0, 0);
 	}
 
 	/**
@@ -135,7 +145,7 @@ public final class InputEvent {
 	 * @return a new {@code MOUSE_MOVE} event
 	 */
 	public static InputEvent mouseMove(final double eventMouseX, final double eventMouseY) {
-		return new InputEvent(Type.MOUSE_MOVE, GLFW_KEY_UNKNOWN, -1, eventMouseX, eventMouseY, 0);
+		return new InputEvent(Type.MOUSE_MOVE, GLFW_KEY_UNKNOWN, -1, eventMouseX, eventMouseY, 0, 0, 0);
 	}
 
 	/**
@@ -144,7 +154,7 @@ public final class InputEvent {
 	 * @return a new {@code FOCUS_LOST} event
 	 */
 	public static InputEvent focusLost() {
-		return new InputEvent(Type.FOCUS_LOST, GLFW_KEY_UNKNOWN, -1, 0, 0, 0);
+		return new InputEvent(Type.FOCUS_LOST, GLFW_KEY_UNKNOWN, -1, 0, 0, 0, 0, 0);
 	}
 
 	/**
@@ -154,7 +164,18 @@ public final class InputEvent {
 	 * @return a new {@code CHAR_TYPED} event
 	 */
 	public static InputEvent charTyped(final int codepoint) {
-		return new InputEvent(Type.CHAR_TYPED, GLFW_KEY_UNKNOWN, -1, 0, 0, codepoint);
+		return new InputEvent(Type.CHAR_TYPED, GLFW_KEY_UNKNOWN, -1, 0, 0, codepoint, 0, 0);
+	}
+
+	/**
+	 * Creates a {@link Type#SCROLL} event.
+	 *
+	 * @param eventScrollX scroll offset on the X axis
+	 * @param eventScrollY scroll offset on the Y axis
+	 * @return a new {@code SCROLL} event
+	 */
+	public static InputEvent scroll(final double eventScrollX, final double eventScrollY) {
+		return new InputEvent(Type.SCROLL, GLFW_KEY_UNKNOWN, -1, 0, 0, 0, eventScrollX, eventScrollY);
 	}
 
 	// -------------------------------------------------------------------------
@@ -216,6 +237,26 @@ public final class InputEvent {
 		return codepoint;
 	}
 
+	/**
+	 * Returns the scroll offset on the X axis.
+	 * Only meaningful for {@link Type#SCROLL} events.
+	 *
+	 * @return scroll offset X
+	 */
+	public double getScrollX() {
+		return scrollX;
+	}
+
+	/**
+	 * Returns the scroll offset on the Y axis.
+	 * Only meaningful for {@link Type#SCROLL} events.
+	 *
+	 * @return scroll offset Y
+	 */
+	public double getScrollY() {
+		return scrollY;
+	}
+
 	// -------------------------------------------------------------------------
 	// Object
 	// -------------------------------------------------------------------------
@@ -226,6 +267,8 @@ public final class InputEvent {
 				+ ", keyCode=" + keyCode
 				+ ", mouseButton=" + mouseButton
 				+ ", mouseX=" + mouseX
-				+ ", mouseY=" + mouseY + "}";
+				+ ", mouseY=" + mouseY
+				+ ", scrollX=" + scrollX
+				+ ", scrollY=" + scrollY + "}";
 	}
 }

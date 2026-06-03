@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.configuration;
+package temmiland.rollercoaster.config;
 
 import com.google.gson.Gson;
 
@@ -26,12 +26,12 @@ public class JsonConfig {
 	/**
 	 * Creates a new {@code JsonConfig}.
 	 *
-	 * @param cGson            Gson instance to use for JSON serialisation
-	 * @param cConfigDirectory base directory for config files (must include trailing separator)
+	 * @param gson            Gson instance to use for JSON serialisation
+	 * @param configDirectory base directory for config files (must include trailing separator)
 	 */
-	public JsonConfig(final Gson cGson, final String cConfigDirectory) {
-		this.gson = cGson;
-		this.configDirectory = cConfigDirectory;
+	public JsonConfig(final Gson gson, final String configDirectory) {
+		this.gson = gson;
+		this.configDirectory = configDirectory;
 	}
 
 	// -------------------------------------------------------------------------

@@ -1,12 +1,12 @@
-package temmiland.rollercoaster.configuration.screen;
+package temmiland.rollercoaster.config.screen;
 
-import temmiland.rollercoaster.configuration.Configuration;
+import temmiland.rollercoaster.config.Configuration;
 
 /**
  * Persisted screen/display settings for the game window.
  *
  * <p>Default values are applied when no config file exists yet. The class is serialised
- * to and deserialised from JSON by {@link temmiland.rollercoaster.configuration.JsonConfig}.
+ * to and deserialised from JSON by {@link temmiland.rollercoaster.config.JsonConfig}.
  * Setters return {@code this} to support method chaining.
  */
 public class ScreenConfiguration extends Configuration {
@@ -17,15 +17,20 @@ public class ScreenConfiguration extends Configuration {
 	private static final int DEFAULT_HEIGHT = 720;
 	/** Default target frame rate in frames per second. */
 	private static final int DEFAULT_FRAME_RATE = 60;
+	/** Whether VSync is enabled by default. */
+	private static final boolean DEFAULT_VSYNC = true;
 
+	// Initial values for the configuration fields. These will be overridden by values from the config file if it exists.
 	/** Whether the window should run in fullscreen mode. */
 	private boolean fullscreen = false;
 	/** Window width from the last session, used to restore the window size on startup. */
 	private int lastWidth = DEFAULT_WIDTH;
 	/** Window height from the last session, used to restore the window size on startup. */
 	private int lastHeight = DEFAULT_HEIGHT;
-	/** Target frame rate in frames per second. */
+	/** Target frame rate in frames per second. Only applied when VSync is disabled. */
 	private int frameRate = DEFAULT_FRAME_RATE;
+	/** Whether hardware VSync paces the render loop to the monitor refresh rate. */
+	private boolean vsync = DEFAULT_VSYNC;
 
 	// -------------------------------------------------------------------------
 	// Constructor
@@ -51,11 +56,11 @@ public class ScreenConfiguration extends Configuration {
 	/**
 	 * Sets whether the window should run in fullscreen mode.
 	 *
-	 * @param cFullscreen {@code true} to enable fullscreen
+	 * @param fullscreen {@code true} to enable fullscreen
 	 * @return {@code this} for method chaining
 	 */
-	public ScreenConfiguration setFullscreen(final boolean cFullscreen) {
-		this.fullscreen = cFullscreen;
+	public ScreenConfiguration setFullscreen(final boolean fullscreen) {
+		this.fullscreen = fullscreen;
 		return this;
 	}
 
@@ -75,11 +80,11 @@ public class ScreenConfiguration extends Configuration {
 	/**
 	 * Sets the window width to persist for the next session.
 	 *
-	 * @param cLastWidth window width in pixels
+	 * @param lastWidth window width in pixels
 	 * @return {@code this} for method chaining
 	 */
-	public ScreenConfiguration setLastWidth(final int cLastWidth) {
-		this.lastWidth = cLastWidth;
+	public ScreenConfiguration setLastWidth(final int lastWidth) {
+		this.lastWidth = lastWidth;
 		return this;
 	}
 
@@ -95,11 +100,11 @@ public class ScreenConfiguration extends Configuration {
 	/**
 	 * Sets the window height to persist for the next session.
 	 *
-	 * @param cLastHeight window height in pixels
+	 * @param lastHeight window height in pixels
 	 * @return {@code this} for method chaining
 	 */
-	public ScreenConfiguration setLastHeight(final int cLastHeight) {
-		this.lastHeight = cLastHeight;
+	public ScreenConfiguration setLastHeight(final int lastHeight) {
+		this.lastHeight = lastHeight;
 		return this;
 	}
 
@@ -119,11 +124,35 @@ public class ScreenConfiguration extends Configuration {
 	/**
 	 * Sets the target frame rate.
 	 *
-	 * @param cFrameRate target frame rate in frames per second
+	 * @param frameRate target frame rate in frames per second
 	 * @return {@code this} for method chaining
 	 */
-	public ScreenConfiguration setFrameRate(final int cFrameRate) {
-		this.frameRate = cFrameRate;
+	public ScreenConfiguration setFrameRate(final int frameRate) {
+		this.frameRate = frameRate;
+		return this;
+	}
+
+	// -------------------------------------------------------------------------
+	// VSync
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Returns whether hardware VSync is enabled.
+	 *
+	 * @return {@code true} if VSync paces the render loop to the monitor refresh rate
+	 */
+	public boolean isVsync() {
+		return vsync;
+	}
+
+	/**
+	 * Sets whether hardware VSync is enabled.
+	 *
+	 * @param vsync {@code true} to pace rendering to the monitor refresh rate
+	 * @return {@code this} for method chaining
+	 */
+	public ScreenConfiguration setVsync(final boolean vsync) {
+		this.vsync = vsync;
 		return this;
 	}
 
@@ -137,6 +166,7 @@ public class ScreenConfiguration extends Configuration {
 				+ "fullscreen=" + fullscreen
 				+ ", lastWidth=" + lastWidth
 				+ ", lastHeight=" + lastHeight
-				+ ", frameRate=" + frameRate + '}';
+				+ ", frameRate=" + frameRate
+				+ ", vsync=" + vsync + '}';
 	}
 }

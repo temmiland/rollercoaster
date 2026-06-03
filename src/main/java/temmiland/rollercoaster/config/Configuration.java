@@ -1,7 +1,7 @@
-package temmiland.rollercoaster.configuration;
+package temmiland.rollercoaster.config;
 
 import com.google.gson.reflect.TypeToken;
-import temmiland.rollercoaster.configuration.screen.ScreenConfiguration;
+import temmiland.rollercoaster.config.screen.ScreenConfiguration;
 
 import java.lang.reflect.Type;
 

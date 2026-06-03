@@ -18,16 +18,15 @@ import temmiland.rollercoaster.gui.widgets.textfield.TextFieldSkin;
 public interface GuiPrimitives {
 
 	/**
-	 * Draws a single tile from the GUI tilesheet, centred on {@code (cx, cy)}.
+	 * Draws a single tile by texture name, centred on {@code (cx, cy)}.
 	 *
-	 * @param col        column in the tilesheet
-	 * @param row        row in the tilesheet
-	 * @param cx         centre X in GUI coordinates
-	 * @param cy         centre Y in GUI coordinates
-	 * @param halfWidth  half the tile width
-	 * @param halfHeight half the tile height
+	 * @param textureName the registered texture name (as in {@code Tile.getTexture()})
+	 * @param cx          centre X in GUI coordinates
+	 * @param cy          centre Y in GUI coordinates
+	 * @param halfWidth   half the tile width
+	 * @param halfHeight  half the tile height
 	 */
-	void drawTile(int col, int row, float cx, float cy, float halfWidth, float halfHeight);
+	void drawTile(String textureName, float cx, float cy, float halfWidth, float halfHeight);
 
 	/**
 	 * Draws text horizontally and vertically centred on {@code (cx, cy)}.

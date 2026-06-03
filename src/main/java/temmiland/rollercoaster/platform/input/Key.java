@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.platform.io;
+package temmiland.rollercoaster.platform.input;
 
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_0;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_1;

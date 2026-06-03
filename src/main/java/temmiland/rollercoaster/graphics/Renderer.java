@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.game.rendering;
+package temmiland.rollercoaster.graphics;
 
 import org.lwjgl.opengl.GL;
 import temmiland.rollercoaster.platform.Window;

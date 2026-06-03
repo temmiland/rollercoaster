@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.configuration.screen;
+package temmiland.rollercoaster.config.screen;
 
 /**
  * Enumeration of supported window display modes.

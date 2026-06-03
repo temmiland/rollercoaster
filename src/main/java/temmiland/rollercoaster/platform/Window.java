@@ -3,8 +3,8 @@ package temmiland.rollercoaster.platform;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 
-import temmiland.rollercoaster.platform.io.InputHandler;
-import temmiland.rollercoaster.platform.io.InputProcessor;
+import temmiland.rollercoaster.platform.input.InputHandler;
+import temmiland.rollercoaster.platform.input.InputProcessor;
 import org.joml.Vector2f;
 import org.lwjgl.glfw.*;
 
@@ -73,12 +73,12 @@ public class Window {
 	/**
 	 * Creates a window with the given initial resolution.
 	 *
-	 * @param cWidth  desired window width in pixels
-	 * @param cHeight desired window height in pixels
+	 * @param width  desired window width in pixels
+	 * @param height desired window height in pixels
 	 */
-	public Window(int cWidth, int cHeight) {
-		width = cWidth;
-		height = cHeight;
+	public Window(int width, int height) {
+		this.width = width;
+		this.height = height;
 		setFullscreen(false);
 		hasResized = false;
 	}
@@ -171,6 +171,19 @@ public class Window {
 		glfwSwapBuffers(window);
 	}
 
+	/**
+	 * Enables or disables hardware VSync. When enabled, {@link #swapBuffers()} blocks until
+	 * the next vertical blank, pacing rendering to the monitor refresh rate.
+	 *
+	 * <p>Must be called on the thread that owns the OpenGL context (i.e. after
+	 * {@code glfwMakeContextCurrent}). Safe to call at runtime to toggle VSync.</p>
+	 *
+	 * @param enabled {@code true} to enable VSync, {@code false} to disable it
+	 */
+	public void setVSync(final boolean enabled) {
+		glfwSwapInterval(enabled ? 1 : 0);
+	}
+
 	// -------------------------------------------------------------------------
 	// Window control
 	// -------------------------------------------------------------------------
@@ -194,21 +207,21 @@ public class Window {
 	/**
 	 * Updates the window title. Has no effect if the native window has not been created yet.
 	 *
-	 * @param cTitle the new window title
+	 * @param title the new window title
 	 */
-	public void setTitle(String cTitle) {
+	public void setTitle(String title) {
 		if (window != 0) {
-			glfwSetWindowTitle(window, cTitle);
+			glfwSetWindowTitle(window, title);
 		}
 	}
 
 	/**
 	 * Sets the fullscreen mode. Takes effect the next time {@link #createWindow()} is called.
 	 *
-	 * @param cFullscreen {@code true} to request fullscreen, {@code false} for windowed mode
+	 * @param fullscreen {@code true} to request fullscreen, {@code false} for windowed mode
 	 */
-	public void setFullscreen(boolean cFullscreen) {
-		this.fullscreen = cFullscreen;
+	public void setFullscreen(boolean fullscreen) {
+		this.fullscreen = fullscreen;
 	}
 
 	/**
@@ -217,22 +230,22 @@ public class Window {
 	 * A resize event is dispatched by GLFW and picked up on the next {@link #update()} call,
 	 * which sets {@link #hasResized()} to {@code true}.
 	 *
-	 * @param cFullscreen {@code true} to switch to fullscreen on the primary monitor;
+	 * @param fullscreen {@code true} to switch to fullscreen on the primary monitor;
 	 *                    {@code false} to switch to windowed mode at the given resolution
-	 * @param cWidth      desired width in pixels (windowed mode only)
-	 * @param cHeight     desired height in pixels (windowed mode only)
+	 * @param width      desired width in pixels (windowed mode only)
+	 * @param height     desired height in pixels (windowed mode only)
 	 */
-	public void applyDisplayMode(final boolean cFullscreen, final int cWidth, final int cHeight) {
-		this.fullscreen = cFullscreen;
-		if (cFullscreen) {
+	public void applyDisplayMode(final boolean fullscreen, final int width, final int height) {
+		this.fullscreen = fullscreen;
+		if (fullscreen) {
 			final long monitor = glfwGetPrimaryMonitor();
 			final GLFWVidMode vid = glfwGetVideoMode(monitor);
 			glfwSetWindowMonitor(this.window, monitor, 0, 0, vid.width(), vid.height(), vid.refreshRate());
 		} else {
 			final GLFWVidMode vid = glfwGetVideoMode(glfwGetPrimaryMonitor());
-			final int x = (vid.width() - cWidth) / 2;
-			final int y = (vid.height() - cHeight) / 2;
-			glfwSetWindowMonitor(this.window, 0L, x, y, cWidth, cHeight, GLFW_DONT_CARE);
+			final int x = (vid.width() - width) / 2;
+			final int y = (vid.height() - height) / 2;
+			glfwSetWindowMonitor(this.window, 0L, x, y, width, height, GLFW_DONT_CARE);
 		}
 	}
 
@@ -274,6 +287,18 @@ public class Window {
 	 */
 	public boolean hasResized() {
 		return hasResized;
+	}
+
+	/**
+	 * Returns the refresh rate of the primary monitor in Hz, or {@code 0} if it cannot be
+	 * determined. Used as a software frame-pacing target when hardware VSync is unreliable
+	 * (notably on macOS, where {@code glfwSwapInterval} does not always block).
+	 *
+	 * @return primary monitor refresh rate in Hz, or {@code 0} if unavailable
+	 */
+	public int getRefreshRate() {
+		final GLFWVidMode vid = glfwGetVideoMode(glfwGetPrimaryMonitor());
+		return vid != null ? vid.refreshRate() : 0;
 	}
 
 	/**

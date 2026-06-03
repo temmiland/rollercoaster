@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.platform.io;
+package temmiland.rollercoaster.platform.input;
 
 import org.joml.Vector2f;
 
@@ -29,6 +29,10 @@ public class InputProcessor {
 	private double rawMouseX;
 	/** Last known cursor Y position in GLFW screen coordinates (origin at top-left). */
 	private double rawMouseY;
+	/** Scroll offset X accumulated in the current tick. */
+	private double scrollX;
+	/** Scroll offset Y accumulated in the current tick. */
+	private double scrollY;
 
 	// -------------------------------------------------------------------------
 	// Tick driver
@@ -44,6 +48,8 @@ public class InputProcessor {
 		pressedThisTick.clear();
 		pressedMouseButtonsThisTick.clear();
 		typedCodepoints.clear();
+		scrollX = 0;
+		scrollY = 0;
 
 		InputEvent event;
 		while ((event = eventQueue.poll()) != null) {
@@ -73,6 +79,10 @@ public class InputProcessor {
 					break;
 				case CHAR_TYPED:
 					typedCodepoints.add(event.getCodepoint());
+					break;
+				case SCROLL:
+					scrollX += event.getScrollX();
+					scrollY += event.getScrollY();
 					break;
 				default:
 					break;
@@ -185,5 +195,29 @@ public class InputProcessor {
 	 */
 	public List<Integer> getTypedCodepoints() {
 		return typedCodepoints;
+	}
+
+	// -------------------------------------------------------------------------
+	// Scroll input
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Returns the accumulated scroll offset on the X axis for the current tick.
+	 * Cleared and repopulated by {@link #processEvents} each tick.
+	 *
+	 * @return scroll offset X in the current tick
+	 */
+	public double getScrollX() {
+		return scrollX;
+	}
+
+	/**
+	 * Returns the accumulated scroll offset on the Y axis for the current tick.
+	 * Cleared and repopulated by {@link #processEvents} each tick.
+	 *
+	 * @return scroll offset Y in the current tick
+	 */
+	public double getScrollY() {
+		return scrollY;
 	}
 }

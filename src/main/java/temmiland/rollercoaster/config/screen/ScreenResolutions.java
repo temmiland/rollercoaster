@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.configuration.screen;
+package temmiland.rollercoaster.config.screen;
 
 /**
  * Enumeration of supported screen resolutions, each carrying a display name, pixel dimensions,
@@ -68,11 +68,11 @@ public enum ScreenResolutions {
 	 */
 	private final double scale;
 
-	ScreenResolutions(final String cDisplayName, final int cWidth, final int cHeight, final double cScale) {
-		this.displayName = cDisplayName;
-		this.width       = cWidth;
-		this.height      = cHeight;
-		this.scale       = cScale;
+	ScreenResolutions(final String displayName, final int width, final int height, final double scale) {
+		this.displayName = displayName;
+		this.width       = width;
+		this.height      = height;
+		this.scale       = scale;
 	}
 
 	// -------------------------------------------------------------------------

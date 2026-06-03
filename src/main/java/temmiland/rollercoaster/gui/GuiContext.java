@@ -56,15 +56,15 @@ public final class GuiContext {
 	/**
 	 * Creates a new {@code GuiContext}.
 	 *
-	 * @param cRenderer      the game-side draw backend
-	 * @param cButtonSkin    the visual style applied to buttons
-	 * @param cTextFieldSkin the visual style applied to text fields
+	 * @param renderer      the game-side draw backend
+	 * @param buttonSkin    the visual style applied to buttons
+	 * @param textFieldSkin the visual style applied to text fields
 	 */
-	public GuiContext(final GuiRenderer cRenderer, final ButtonSkin cButtonSkin,
-	                  final TextFieldSkin cTextFieldSkin) {
-		this.renderer      = cRenderer;
-		this.buttonSkin    = cButtonSkin;
-		this.textFieldSkin = cTextFieldSkin;
+	public GuiContext(final GuiRenderer renderer, final ButtonSkin buttonSkin,
+	                  final TextFieldSkin textFieldSkin) {
+		this.renderer      = renderer;
+		this.buttonSkin    = buttonSkin;
+		this.textFieldSkin = textFieldSkin;
 	}
 
 	// -------------------------------------------------------------------------
@@ -88,26 +88,26 @@ public final class GuiContext {
 	/**
 	 * Executes the layout in the interact pass (call from the logic tick).
 	 *
-	 * @param cInput  input backend for this tick
-	 * @param cDelta  tick delta in seconds
+	 * @param input  input backend for this tick
+	 * @param delta  tick delta in seconds
 	 * @param layout  the screen layout method
 	 */
-	public void interact(final GuiInput cInput, final double cDelta, final Consumer<GuiContext> layout) {
+	public void interact(final GuiInput input, final double delta, final Consumer<GuiContext> layout) {
 		this.phase = Phase.INTERACT;
-		this.input = cInput;
-		this.delta = cDelta;
+		this.input = input;
+		this.delta = delta;
 		layout.accept(this);
 	}
 
 	/**
 	 * Executes the layout in the render pass (call from the render frame).
 	 *
-	 * @param cInput  input backend for this frame (used for hover and pressed visuals)
+	 * @param input  input backend for this frame (used for hover and pressed visuals)
 	 * @param layout  the screen layout method
 	 */
-	public void render(final GuiInput cInput, final Consumer<GuiContext> layout) {
+	public void render(final GuiInput input, final Consumer<GuiContext> layout) {
 		this.phase = Phase.RENDER;
-		this.input = cInput;
+		this.input = input;
 		renderer.begin();
 		layout.accept(this);
 	}
@@ -148,6 +148,18 @@ public final class GuiContext {
 	}
 
 	/**
+	 * Declares a full-screen tiled background (visible in the render pass only).
+	 * Call first in a layout so it sits behind all other widgets.
+	 *
+	 * @param textureName the registered texture name (as in {@code Tile.getTexture()})
+	 */
+	public void background(final String textureName) {
+		if (phase == Phase.RENDER) {
+			renderer.drawBackground(textureName);
+		}
+	}
+
+	/**
 	 * Declares a centred text label (visible in the render pass only).
 	 *
 	 * @param text  the text to display
@@ -168,17 +180,16 @@ public final class GuiContext {
 	/**
 	 * Declares a single tilesheet tile (visible in the render pass only).
 	 *
-	 * @param col column in the tilesheet
-	 * @param row row in the tilesheet
-	 * @param cx  centre X in GUI coordinates
-	 * @param cy  centre Y in GUI coordinates
-	 * @param hw  half-width
-	 * @param hh  half-height
+	 * @param textureName the registered texture name (as in {@code Tile.getTexture()})
+	 * @param cx          centre X in GUI coordinates
+	 * @param cy          centre Y in GUI coordinates
+	 * @param hw          half-width
+	 * @param hh          half-height
 	 */
-	public void sprite(final int col, final int row, final float cx, final float cy,
+	public void sprite(final String textureName, final float cx, final float cy,
 	                   final float hw, final float hh) {
 		if (phase == Phase.RENDER) {
-			renderer.drawTile(col, row, cx, cy, hw, hh);
+			renderer.drawTile(textureName, cx, cy, hw, hh);
 		}
 	}
 

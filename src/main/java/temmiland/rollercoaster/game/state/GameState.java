@@ -83,18 +83,18 @@ public abstract class GameState<M extends GameStateManager<M>> {
 	public final void save()                         { onSave(); }
 
 	/**
-	 * Returns the debug text lines provided by {@link #onGetDebugLines()}.
+	 * Returns the debug text lines provided by {@link #onDebugLines()}.
 	 *
 	 * @return array of debug lines; never {@code null}
 	 */
-	public final String[] getDebugLines()            { return onGetDebugLines(); }
+	public final String[] getDebugLines()            { return onDebugLines(); }
 
 	/**
-	 * Returns whether the debug overlay should be shown, as reported by {@link #showDebugMenu()}.
+	 * Returns whether the debug overlay should be shown, as reported by {@link #onDebugOverlayEnabled()}.
 	 *
 	 * @return {@code true} if the debug overlay is enabled for this state
 	 */
-	public final boolean isDebugOverlayEnabled()     { return showDebugMenu(); }
+	public final boolean isDebugOverlayEnabled()     { return onDebugOverlayEnabled(); }
 
 	// -------------------------------------------------------------------------
 	// Required template methods
@@ -150,7 +150,7 @@ public abstract class GameState<M extends GameStateManager<M>> {
 	 *
 	 * @return array of debug lines
 	 */
-	protected String[] onGetDebugLines() { return new String[0]; }
+	protected String[] onDebugLines() { return new String[0]; }
 
 	/**
 	 * Returns whether the debug overlay should be shown for this state.
@@ -158,5 +158,5 @@ public abstract class GameState<M extends GameStateManager<M>> {
 	 *
 	 * @return {@code true} to show the debug overlay
 	 */
-	protected boolean showDebugMenu() { return true; }
+	protected boolean onDebugOverlayEnabled() { return true; }
 }

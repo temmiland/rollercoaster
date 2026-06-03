@@ -2,9 +2,9 @@ package temmiland.rollercoaster;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import temmiland.rollercoaster.configuration.ConfigurationStorage;
-import temmiland.rollercoaster.configuration.JsonConfig;
-import temmiland.rollercoaster.configuration.screen.ScreenConfiguration;
+import temmiland.rollercoaster.config.ConfigurationStorage;
+import temmiland.rollercoaster.config.JsonConfig;
+import temmiland.rollercoaster.config.screen.ScreenConfiguration;
 import temmiland.rollercoaster.platform.Window;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +45,8 @@ public class Rollercoaster {
      * <ol>
      *   <li>Full subsystem initialization via {@link #initialize(String)}</li>
      *   <li>Game instance creation via constructor with {@link Window} and {@link ConfigurationStorage}</li>
-     *   <li>Window configuration via {@link Game#afterWindowCreation(Window)}</li>
      *   <li>Window creation</li>
+     *   <li>Window configuration (VSync, title via {@link Game#getTitle()})</li>
      *   <li>Game execution via {@link Game#run()}</li>
      * </ol>
      *
@@ -61,7 +61,8 @@ public class Rollercoaster {
                     .getDeclaredConstructor(Window.class, ConfigurationStorage.class)
                     .newInstance(window, configurationStorage);
             window.createWindow();
-            game.afterWindowCreation(window);
+            window.setVSync(configurationStorage.getScreenConfiguration().isVsync());
+            window.setTitle(game.getTitle());
             game.run();
         } catch (Exception e) {
             throw new RuntimeException("Fehler beim Erstellen/Ausführen des Games: " + gameClass.getName(), e);

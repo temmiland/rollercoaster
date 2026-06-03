@@ -1,8 +1,9 @@
 package temmiland.rollercoaster.game;
 
-import temmiland.rollercoaster.configuration.ConfigurationStorage;
-import temmiland.rollercoaster.game.rendering.Renderer;
-import temmiland.rollercoaster.game.debug.DebugHud;
+import temmiland.rollercoaster.config.ConfigurationStorage;
+import temmiland.rollercoaster.config.screen.ScreenConfiguration;
+import temmiland.rollercoaster.graphics.Renderer;
+import temmiland.rollercoaster.debug.DebugHud;
 import temmiland.rollercoaster.game.state.GameStateManager;
 import temmiland.rollercoaster.platform.Window;
 import org.slf4j.Logger;
@@ -38,8 +39,6 @@ public abstract class Game<T extends GameStateManager<T>> {
 	protected final ConfigurationStorage configurationStorage;
 	/** Game-state manager for state transitions. */
 	protected T gsm;
-	/** Target frame rate read from the screen configuration. */
-	protected final int fpsRate;
 
 	// -------------------------------------------------------------------------
 	// Constructor
@@ -55,7 +54,6 @@ public abstract class Game<T extends GameStateManager<T>> {
 	protected Game(final Window window, final ConfigurationStorage configurationStorage, final T gsm) {
 		this.window = window;
 		this.configurationStorage = configurationStorage;
-		this.fpsRate = configurationStorage.getScreenConfiguration().getFrameRate();
 		this.gsm = gsm;
 	}
 
@@ -68,11 +66,11 @@ public abstract class Game<T extends GameStateManager<T>> {
 	 *
 	 * <p>This method is {@code final} and runs the standard sequence:
 	 * <ol>
-	 *   <li>{@link #initRenderer()} — initialise the rendering system</li>
-	 *   <li>{@link #loadAssets()} — load game resources</li>
-	 *   <li>{@link #initGameState()} — prepare the game-state system</li>
+	 *   <li>initialise the rendering system, then {@link #onInitRenderer()}</li>
+	 *   <li>{@link #onLoadAssets()} — load game resources</li>
+	 *   <li>prepare the game-state system, then {@link #onInitGameState()}</li>
 	 *   <li>{@link #runGameLoop()} — execute the main loop</li>
-	 *   <li>{@link #cleanup()} — release resources (always runs, even on error)</li>
+	 *   <li>{@link #onCleanup()} then framework teardown (always runs, even on error)</li>
 	 * </ol>
 	 */
 	public final void run() {
@@ -89,41 +87,25 @@ public abstract class Game<T extends GameStateManager<T>> {
 		}
 	}
 
-	/**
-	 * Lifecycle hook called after the game is instantiated but before
-	 * {@code glfwCreateWindow} runs.
-	 *
-	 * <p>Override to configure window properties (title, hints, …).
-	 * The default implementation is a no-op.
-	 *
-	 * @param window the configurable, not-yet-created window
-	 */
-	public void afterWindowCreation(final Window window) { }
-
 	// -------------------------------------------------------------------------
-	// Template methods
+	// Internal lifecycle (final — framework logic that always runs)
 	// -------------------------------------------------------------------------
 
-	/**
-	 * Initialises the rendering system (e.g. OpenGL).
-	 * The default implementation calls {@link Renderer#initRenderer(Window)}.
-	 */
-	protected void initRenderer() {
+	/** Initialises the rendering system, then calls {@link #onInitRenderer()}. */
+	private void initRenderer() {
 		Renderer.initRenderer(window);
+		onInitRenderer();
 	}
 
-	/**
-	 * Loads game resources (e.g. textures, shaders, audio).
-	 * Called after renderer initialisation.
-	 */
-	protected abstract void loadAssets();
+	/** Loads game assets, then calls {@link #onLoadAssets()}. */
+	private void loadAssets() {
+		onLoadAssets();
+	}
 
-	/**
-	 * Prepares the game-state system.
-	 * Called after asset loading. The default implementation calls {@link GameStateManager#init}.
-	 */
-	protected void initGameState() {
+	/** Prepares the game-state system, then calls {@link #onInitGameState()}. */
+	private void initGameState() {
 		gsm.init(window);
+		onInitGameState();
 	}
 
 	/**
@@ -133,10 +115,74 @@ public abstract class Game<T extends GameStateManager<T>> {
 	 * loop structure.
 	 */
 	protected void runGameLoop() {
-		new GameLoop(gsm, fpsRate, getTickRate(), getMaxUpdatesPerFrame(),
-				getDebugToggle(), createDebugHud(),
-				() -> gsm.save()).run(window);
+		final ScreenConfiguration screen = configurationStorage.getScreenConfiguration();
+		new GameLoop(gsm, getTickRate(), getMaxUpdatesPerFrame(),
+				isDebugTogglePressed(), screen::isVsync, screen::getFrameRate,
+				createDebugHud(), () -> gsm.save()).run(window);
 	}
+
+	/**
+	 * Runs the subclass cleanup hook, then releases framework resources.
+	 * Always called at the end of {@link #run()}, even if an exception was thrown.
+	 *
+	 * <p>The subclass hook runs first, while the window and GL context are still
+	 * valid; framework teardown follows. Both phases are guarded so a failure in
+	 * one does not prevent the other.</p>
+	 *
+	 * <p>Framework teardown:
+	 * <ol>
+	 *   <li>Save the current window size to the screen configuration</li>
+	 *   <li>Persist all configurations to disk</li>
+	 *   <li>Release the GLFW window</li>
+	 *   <li>Terminate GLFW</li>
+	 * </ol>
+	 */
+	private void cleanup() {
+		onCleanup();
+		configurationStorage.getScreenConfiguration()
+				.setLastWidth(window.getWidth())
+				.setLastHeight(window.getHeight());
+		configurationStorage.saveAllConfigurations();
+		window.cleanUp();
+		glfwTerminate();
+	}
+
+	// -------------------------------------------------------------------------
+	// Template-method hooks
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Called after the rendering system has been initialised. Override to perform
+	 * game-specific render setup. Default is a no-op.
+	 */
+	protected abstract void onInitRenderer();
+
+	/**
+	 * Called by the framework to load game resources (e.g. textures, shaders, audio).
+	 * Called after renderer initialisation.
+	 */
+	protected abstract void onLoadAssets();
+
+	/**
+	 * Called after the game-state system has been prepared. Override to perform
+	 * game-specific state setup. Default is a no-op.
+	 */
+	protected abstract void onInitGameState();
+
+	/**
+	 * Called during shutdown to release game-specific resources, while the window
+	 * and GL context are still valid. Framework teardown runs afterwards.
+	 * Default is a no-op.
+	 */
+	protected abstract void onCleanup();
+
+	/**
+	 * Returns the window title for this game. Applied by the bootstrap right after
+	 * the window is created.
+	 *
+	 * @return the window title
+	 */
+	public abstract String getTitle();
 
 	/**
 	 * Returns the logic update rate in ticks per second.
@@ -159,43 +205,14 @@ public abstract class Game<T extends GameStateManager<T>> {
 	 *
 	 * @return debug toggle supplier
 	 */
-	protected BooleanSupplier getDebugToggle() {
-		return () -> false;
-	}
+	protected abstract BooleanSupplier isDebugTogglePressed();
 
 	/**
 	 * Returns the {@link DebugHud} overlay, or {@code null} if no overlay is desired.
 	 *
 	 * @return debug HUD, or {@code null}
 	 */
-	protected DebugHud createDebugHud() {
-		return null;
-	}
-
-	/**
-	 * Releases resources and performs cleanup.
-	 * Always called at the end of {@link #run()}, even if an exception was thrown.
-	 *
-	 * <p>Default behaviour:
-	 * <ol>
-	 *   <li>Save the current window size to the screen configuration</li>
-	 *   <li>Persist all configurations to disk</li>
-	 *   <li>Release the GLFW window</li>
-	 *   <li>Terminate GLFW</li>
-	 * </ol>
-	 */
-	protected void cleanup() {
-		try {
-			configurationStorage.getScreenConfiguration()
-					.setLastWidth(window.getWidth())
-					.setLastHeight(window.getHeight());
-			configurationStorage.saveAllConfigurations();
-			window.cleanUp();
-			glfwTerminate();
-		} catch (Exception e) {
-			logger.error("Error during cleanup", e);
-		}
-	}
+	protected abstract DebugHud createDebugHud();
 
 	// -------------------------------------------------------------------------
 	// Accessors

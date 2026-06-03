@@ -1,4 +1,4 @@
-package temmiland.rollercoaster.game.debug;
+package temmiland.rollercoaster.debug;
 
 import temmiland.rollercoaster.platform.Window;
 

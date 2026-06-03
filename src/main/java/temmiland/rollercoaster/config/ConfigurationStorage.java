@@ -1,6 +1,6 @@
-package temmiland.rollercoaster.configuration;
+package temmiland.rollercoaster.config;
 
-import temmiland.rollercoaster.configuration.screen.ScreenConfiguration;
+import temmiland.rollercoaster.config.screen.ScreenConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +25,10 @@ public class ConfigurationStorage {
 	/**
 	 * Creates a new {@code ConfigurationStorage} backed by the given {@link JsonConfig}.
 	 *
-	 * @param cJsonConfig the JSON config backend to use for all read/write operations
+	 * @param jsonConfig the JSON config backend to use for all read/write operations
 	 */
-	public ConfigurationStorage(final JsonConfig cJsonConfig) {
-		this.jsonConfig = cJsonConfig;
+	public ConfigurationStorage(final JsonConfig jsonConfig) {
+		this.jsonConfig = jsonConfig;
 	}
 
 	// -------------------------------------------------------------------------
@@ -94,11 +94,11 @@ public class ConfigurationStorage {
 	/**
 	 * Replaces the cached screen configuration.
 	 *
-	 * @param cScreenConfiguration the new {@link ScreenConfiguration} to cache
+	 * @param screenConfiguration the new {@link ScreenConfiguration} to cache
 	 * @return {@code this} for method chaining
 	 */
-	public ConfigurationStorage setScreenConfiguration(final ScreenConfiguration cScreenConfiguration) {
-		this.screenConfiguration = cScreenConfiguration;
+	public ConfigurationStorage setScreenConfiguration(final ScreenConfiguration screenConfiguration) {
+		this.screenConfiguration = screenConfiguration;
 		return this;
 	}
 

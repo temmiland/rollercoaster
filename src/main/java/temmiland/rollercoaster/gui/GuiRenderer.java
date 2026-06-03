@@ -20,6 +20,14 @@ public interface GuiRenderer extends GuiPrimitives {
 	void begin();
 
 	/**
+	 * Fills the entire screen with the given texture, tiled at its native size.
+	 * Intended to be called first in a layout pass, behind all widgets.
+	 *
+	 * @param textureName the registered texture name (as in {@code Tile.getTexture()})
+	 */
+	void drawBackground(String textureName);
+
+	/**
 	 * Called when the window is resized (e.g. to recompute the GUI projection matrix).
 	 *
 	 * @param width  new window width in pixels

@@ -1,9 +1,10 @@
-package temmiland.rollercoaster.platform.io;
+package temmiland.rollercoaster.platform.input;
 
 import org.lwjgl.glfw.GLFWCharCallback;
 import org.lwjgl.glfw.GLFWCursorPosCallback;
 import org.lwjgl.glfw.GLFWKeyCallback;
 import org.lwjgl.glfw.GLFWMouseButtonCallback;
+import org.lwjgl.glfw.GLFWScrollCallback;
 import org.lwjgl.glfw.GLFWWindowFocusCallback;
 
 import java.util.Queue;
@@ -16,6 +17,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowFocusCallback;
 
 /**
@@ -50,6 +52,8 @@ public class InputHandler {
 	 * Not fired for non-printable keys such as Backspace.
 	 */
 	private GLFWCharCallback charCallback;
+	/** Scroll callback — enqueues scroll events when the mouse wheel is scrolled. */
+	private GLFWScrollCallback scrollCallback;
 
 	// -------------------------------------------------------------------------
 	// Lifecycle
@@ -99,11 +103,16 @@ public class InputHandler {
 			eventQueue.add(InputEvent.charTyped(codepoint))
 		);
 
+		scrollCallback = GLFWScrollCallback.create((win, scrollX, scrollY) ->
+			eventQueue.add(InputEvent.scroll(scrollX, scrollY))
+		);
+
 		glfwSetKeyCallback(handle, keyCallback);
 		glfwSetMouseButtonCallback(handle, mouseButtonCallback);
 		glfwSetCursorPosCallback(handle, cursorPosCallback);
 		glfwSetWindowFocusCallback(handle, windowFocusCallback);
 		glfwSetCharCallback(handle, charCallback);
+		glfwSetScrollCallback(handle, scrollCallback);
 	}
 
 	/**
@@ -119,6 +128,7 @@ public class InputHandler {
 		glfwSetCursorPosCallback(windowHandle, null);
 		glfwSetWindowFocusCallback(windowHandle, null);
 		glfwSetCharCallback(windowHandle, null);
+		glfwSetScrollCallback(windowHandle, null);
 
 		if (keyCallback != null) {
 			keyCallback.free();
@@ -139,6 +149,10 @@ public class InputHandler {
 		if (charCallback != null) {
 			charCallback.free();
 			charCallback = null;
+		}
+		if (scrollCallback != null) {
+			scrollCallback.free();
+			scrollCallback = null;
 		}
 	}
 
