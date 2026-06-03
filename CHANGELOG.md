@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-06-03
+
+### Security
+
+- **CVE-2024-12798** — Updated `logback-classic` from 1.5.12 to 1.5.34 to address an arbitrary code execution vulnerability in `JaninoEventEvaluator`
+
+### Changed
+
+- Updated `lwjgl` from 3.3.5 to 3.4.1
+- Updated `joml` from 1.10.7 to 1.10.8
+- Updated `slf4j-api` from 2.0.16 to 2.0.18
+- Resolved all Checkstyle warnings:
+  - Renamed `logger` constant to `LOGGER` in `Game` to satisfy `ConstantName`
+  - Changed `HashMap` field type to `Map` in `GameStateManager` to satisfy `IllegalType`
+  - Replaced inline conditionals with `if`/`else` blocks in `GameLoop`, `Window`, and `InputProcessor`
+  - Extracted magic number `1_000_000_000L` into `NANOS_PER_SECOND` constant in `GameLoop`
+  - Expanded single-line method bodies to multi-line in `GameState` and `TileWorld`
+  - Added missing `final` on local variables in `Rollercoaster`
+  - Added missing Javadoc `@param` tags to `GameState`, `GameStateDescriptor`, and `TileWorld`
+  - Excluded `ENUM_CONSTANT_DEF` from the `JavadocVariable` Checkstyle rule
+
 ## [0.1.3] - 2026-06-03
 
 ### Changed
@@ -58,7 +79,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed package `configuration` → `config` and `platform.io` → `platform.input`
 - Moved `debug` and `rendering` out of the `game` sub-package into dedicated top-level packages
 
-[Unreleased]: https://github.com/temmiland/rollercoaster/compare/0.1.2...HEAD
-[0.1.1]: https://github.com/temmiland/rollercoaster/compare/0.1.1...0.1.2
+[Unreleased]: https://github.com/temmiland/rollercoaster/compare/0.1.4...HEAD
+[0.1.4]: https://github.com/temmiland/rollercoaster/compare/0.1.3...0.1.4
+[0.1.3]: https://github.com/temmiland/rollercoaster/compare/0.1.2...0.1.3
+[0.1.2]: https://github.com/temmiland/rollercoaster/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/temmiland/rollercoaster/compare/0.1.0...0.1.1
 [0.1.0]: https://github.com/temmiland/rollercoaster/releases/tag/0.1.0
