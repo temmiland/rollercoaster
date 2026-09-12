@@ -7,15 +7,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
-import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import land.temmi.rollercoaster.render.LowResTarget;
 import land.temmi.rollercoaster.render.PixelCamera;
@@ -24,14 +21,11 @@ import land.temmi.rollercoaster.render.BillboardRenderer;
 import land.temmi.rollercoaster.world.TestMap;
 import land.temmi.rollercoaster.world.LoadedMap;
 import land.temmi.rollercoaster.world.MapEntity;
-import land.temmi.rollercoaster.world.MapProp;
-import land.temmi.rollercoaster.asset.ModelCatalog;
-import land.temmi.rollercoaster.asset.ModelDefinition;
+import land.temmi.rollercoaster.world.WorldScene;
 import land.temmi.rollercoaster.actor.GridActor;
 import land.temmi.rollercoaster.actor.SpriteAnimation;
 import land.temmi.rollercoaster.input.InputSource;
 import land.temmi.rollercoaster.input.KeyboardInput;
-import com.badlogic.gdx.utils.Array;
 
 public class RollercoasterGame extends ApplicationAdapter {
 
@@ -46,9 +40,7 @@ public class RollercoasterGame extends ApplicationAdapter {
     private final Matrix4 overlayProjection = new Matrix4();
 
     private ModelBatch modelBatch;
-    private Array<Model> chunks;
-    private Array<Model> propModels;
-    private final Array<ModelInstance> world = new Array<>();
+    private WorldScene worldScene;
     private Texture spriteTexture;
     private BillboardRenderer playerSprite;
     private GridActor player;
@@ -70,27 +62,8 @@ public class RollercoasterGame extends ApplicationAdapter {
         shapes = new ShapeRenderer();
 
         modelBatch = new ModelBatch(new WorldShaderProvider());
-        chunks = TestMap.create();
-        for (Model chunk : chunks) world.add(new ModelInstance(chunk));
-        LoadedMap map = TestMap.getLoadedMap();
-        propModels = TestMap.createPropModels();
-        ModelCatalog catalog = TestMap.getModelCatalog();
-        for (int i = 0; i < propModels.size; i++) {
-            MapProp prop = map.props.get(i);
-            ModelInstance instance = new ModelInstance(propModels.get(i));
-            ModelDefinition definition = catalog.definition(prop.model);
-            float radians = prop.rotation * MathUtils.degreesToRadians;
-            float offsetX = definition.offsetX * definition.scale * MathUtils.cos(radians)
-                - definition.offsetZ * definition.scale * MathUtils.sin(radians);
-            float offsetZ = definition.offsetX * definition.scale * MathUtils.sin(radians)
-                + definition.offsetZ * definition.scale * MathUtils.cos(radians);
-            instance.transform.setToTranslation(prop.x + offsetX,
-                map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)) + definition.offsetY,
-                prop.z + offsetZ)
-                .scale(definition.scale, definition.scale, definition.scale)
-                .rotate(Vector3.Y, prop.rotation);
-            world.add(instance);
-        }
+        worldScene = TestMap.createScene();
+        LoadedMap map = worldScene.getMap();
 
         Pixmap sprite = new Pixmap(32, 24, Pixmap.Format.RGBA8888);
         paintSprite(sprite, 0, false);
@@ -136,7 +109,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         modelBatch.begin(pixelCamera.camera);
-        modelBatch.render(world);
+        modelBatch.render(worldScene.getInstances());
         modelBatch.render(playerSprite);
         modelBatch.end();
 
@@ -207,9 +180,8 @@ public class RollercoasterGame extends ApplicationAdapter {
         debugFont.dispose();
         shapes.dispose();
         modelBatch.dispose();
-        TestMap.getModelCatalog().dispose();
+        worldScene.dispose();
         playerSprite.dispose();
         spriteTexture.dispose();
-        for (Model chunk : chunks) chunk.dispose();
     }
 }

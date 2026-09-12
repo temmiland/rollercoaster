@@ -49,6 +49,11 @@ public final class TestMap {
         }
     }
 
+    public static WorldScene createScene() {
+        Array<Model> chunks = create();
+        return new WorldScene(getLoadedMap(), chunks, getModelCatalog());
+    }
+
     public static boolean isBlocked(int x, int z) {
         return loadedTiles != null && loadedTiles.isBlocked(x, z);
     }
