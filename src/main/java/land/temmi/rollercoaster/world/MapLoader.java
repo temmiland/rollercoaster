@@ -7,9 +7,13 @@ import com.badlogic.gdx.utils.JsonValue;
 
 /** Manual JSON parser kept reflection-free for RoboVM. */
 public final class MapLoader {
+    public static final int CURRENT_VERSION = 1;
+
     public LoadedMap load(FileHandle file, Tileset tileset) {
         if (file == null || tileset == null) throw new IllegalArgumentException("Map file and tileset are required");
         JsonValue root = new JsonReader().parse(file);
+        int version = root.getInt("version", CURRENT_VERSION);
+        if (version != CURRENT_VERSION) throw error("Unsupported version: " + version);
         String name = requiredString(root, "name");
         JsonValue size = required(root, "size");
         if (!size.isArray() || size.size < 2) throw error("size must contain width and depth");

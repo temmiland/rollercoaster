@@ -7,11 +7,15 @@ import com.badlogic.gdx.utils.JsonValue;
 
 /** Reflection-free parser for model placement metadata. */
 public final class ModelManifest {
+    public static final int CURRENT_VERSION = 1;
+
     private ModelManifest() { }
 
     public static Array<ModelDefinition> load(FileHandle file) {
         if (file == null) throw new IllegalArgumentException("Model manifest is required");
         JsonValue root = new JsonReader().parse(file);
+        int version = root.getInt("version", CURRENT_VERSION);
+        if (version != CURRENT_VERSION) throw error("Unsupported version: " + version);
         JsonValue models = root.get("models");
         if (models == null || !models.isArray()) throw error("models must be an array");
         Array<ModelDefinition> definitions = new Array<>();
