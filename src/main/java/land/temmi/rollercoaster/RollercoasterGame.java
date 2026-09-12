@@ -15,6 +15,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import land.temmi.rollercoaster.render.LowResTarget;
 import land.temmi.rollercoaster.render.PixelCamera;
@@ -23,6 +24,7 @@ import land.temmi.rollercoaster.render.BillboardRenderer;
 import land.temmi.rollercoaster.world.TestMap;
 import land.temmi.rollercoaster.world.LoadedMap;
 import land.temmi.rollercoaster.world.MapEntity;
+import land.temmi.rollercoaster.world.MapProp;
 import land.temmi.rollercoaster.actor.GridActor;
 import land.temmi.rollercoaster.actor.SpriteAnimation;
 import land.temmi.rollercoaster.input.InputSource;
@@ -43,6 +45,7 @@ public class RollercoasterGame extends ApplicationAdapter {
 
     private ModelBatch modelBatch;
     private Array<Model> chunks;
+    private Array<Model> propModels;
     private final Array<ModelInstance> world = new Array<>();
     private Texture spriteTexture;
     private BillboardRenderer playerSprite;
@@ -68,6 +71,15 @@ public class RollercoasterGame extends ApplicationAdapter {
         chunks = TestMap.create();
         for (Model chunk : chunks) world.add(new ModelInstance(chunk));
         LoadedMap map = TestMap.getLoadedMap();
+        propModels = TestMap.createPropModels();
+        for (int i = 0; i < propModels.size; i++) {
+            MapProp prop = map.props.get(i);
+            ModelInstance instance = new ModelInstance(propModels.get(i));
+            instance.transform.setToTranslation(prop.x - 1f,
+                map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)), prop.z - 1f)
+                .rotate(Vector3.Y, prop.rotation);
+            world.add(instance);
+        }
 
         Pixmap sprite = new Pixmap(32, 24, Pixmap.Format.RGBA8888);
         paintSprite(sprite, 0, false);
@@ -187,5 +199,6 @@ public class RollercoasterGame extends ApplicationAdapter {
         playerSprite.dispose();
         spriteTexture.dispose();
         for (Model chunk : chunks) chunk.dispose();
+        for (Model prop : propModels) prop.dispose();
     }
 }

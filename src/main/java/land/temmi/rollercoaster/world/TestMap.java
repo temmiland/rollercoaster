@@ -28,14 +28,11 @@ public final class TestMap {
             prototypes.add(path);
             TilePrototype plateau = ground(new Color(0.47f, 0.64f, 0.30f, 1f), 1.35f, 5f, 6f);
             prototypes.add(plateau);
-            TilePrototype house = house();
-            prototypes.add(house);
             Tileset tileset = new Tileset()
                 .add("grass", grass)
                 .add("lightGrass", lightGrass)
                 .add("path", path)
-                .add("plateau", plateau)
-                .add("house", house);
+                .add("plateau", plateau);
             LoadedMap loaded = new MapLoader().load(
                 Gdx.files.classpath("maps/testfield.json"), tileset);
             TileMap map = loaded.tiles;
@@ -54,6 +51,18 @@ public final class TestMap {
     public static LoadedMap getLoadedMap() {
         if (loadedMap == null) throw new IllegalStateException("Test map has not been created");
         return loadedMap;
+    }
+
+    public static Array<Model> createPropModels() {
+        Array<Model> models = new Array<>();
+        for (MapProp prop : getLoadedMap().props) {
+            if (!"house".equals(prop.model)) {
+                for (Model model : models) model.dispose();
+                throw new IllegalArgumentException("Unknown test map prop: " + prop.model);
+            }
+            models.add(house());
+        }
+        return models;
     }
 
     private static TilePrototype ground(Color color, float thickness) {
@@ -76,7 +85,7 @@ public final class TestMap {
         return new TilePrototype(builder.end());
     }
 
-    private static TilePrototype house() {
+    private static Model house() {
         ModelBuilder builder = new ModelBuilder();
         builder.begin();
         MeshPartBuilder mesh = builder.part("house", GL20.GL_TRIANGLES, ChunkMesher.ATTRIBUTES, new Material());
@@ -96,6 +105,6 @@ public final class TestMap {
         mesh.setColor(0.40f, 0.70f, 0.78f, 1f);
         mesh.box(-0.7f, 1.65f, 2.02f, 0.7f, 0.8f, 0.04f);
         mesh.box(1.7f, 1.65f, 2.02f, 0.7f, 0.8f, 0.04f);
-        return new TilePrototype(builder.end());
+        return builder.end();
     }
 }
