@@ -16,18 +16,22 @@ final class BillboardShader implements Shader {
     private RenderContext context;
     private Camera camera;
     private final LightingEnvironment lighting;
+    private final DirectionalShadowMap shadows;
     private final LightingUniforms lightingUniforms = new LightingUniforms();
+    private final ShadowUniforms shadowUniforms = new ShadowUniforms();
 
-    BillboardShader(LightingEnvironment lighting) {
+    BillboardShader(LightingEnvironment lighting, DirectionalShadowMap shadows) {
         this.lighting = lighting;
+        this.shadows = shadows;
     }
 
     @Override
     public void init() {
         String path = "land/temmi/rollercoaster/render/";
+        String prefix = shadows == null ? "" : "#define directionalShadow\n";
         program = new ShaderProgram(
-            Gdx.files.classpath(path + "billboard.vert").readString("UTF-8"),
-            Gdx.files.classpath(path + "billboard.frag").readString("UTF-8"));
+            prefix + Gdx.files.classpath(path + "billboard.vert").readString("UTF-8"),
+            prefix + Gdx.files.classpath(path + "billboard.frag").readString("UTF-8"));
         if (!program.isCompiled()) {
             String log = program.getLog();
             program.dispose();
@@ -58,6 +62,7 @@ final class BillboardShader implements Shader {
         program.setUniformMatrix("u_worldTrans", renderable.worldTransform);
         program.setUniformi("u_texture", context.textureBinder.bind(texture.textureDescription));
         program.setUniformf("u_uvTransform", texture.offsetU, texture.offsetV, texture.scaleU, texture.scaleV);
+        if (shadows != null) shadowUniforms.apply(program, shadows, context.textureBinder);
         renderable.meshPart.render(program);
     }
 

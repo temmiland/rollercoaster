@@ -58,9 +58,9 @@ public final class DayNightCycle {
         float horizontal = MathUtils.cos(elevation);
         sunDirection.set(MathUtils.cos(azimuth) * horizontal, Math.max(0.05f, elevation),
             MathUtils.sin(azimuth) * horizontal).nor();
-        ambient.set(0.10f + 0.90f * daylight, 0.14f + 0.82f * daylight, 0.28f + 0.62f * daylight, 1f);
+        ambient.set(0.40f + 0.60f * daylight, 0.48f + 0.48f * daylight, 0.70f + 0.20f * daylight, 1f);
         sun.set(1f, 0.72f + 0.25f * daylight, 0.48f + 0.45f * daylight, 1f);
-        environment.setAmbient(ambient, 0.28f + 0.72f * daylight);
+        environment.setAmbient(ambient, 0.45f - 0.11f * daylight);
         environment.setSun(sunDirection, sun, 0.95f * daylight);
     }
 }

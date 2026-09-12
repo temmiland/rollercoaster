@@ -9,6 +9,10 @@ uniform vec4 u_uvTransform;
 varying vec2 v_uv;
 varying vec3 v_worldPosition;
 varying vec3 v_normal;
+#ifdef directionalShadow
+uniform mat4 u_shadowMatrix;
+varying vec4 v_shadowPosition;
+#endif
 
 void main() {
     vec3 center = u_worldTrans[3].xyz;
@@ -18,6 +22,9 @@ void main() {
         + vec3(0.0, (a_position.y + 0.5) * height * u_heightScale, 0.0);
     v_worldPosition = worldPosition;
     v_normal = normalize(cross(vec3(0.0, 1.0, 0.0), u_billboardRight));
+#ifdef directionalShadow
+    v_shadowPosition = u_shadowMatrix * vec4(worldPosition, 1.0);
+#endif
     vec4 clip = u_projViewTrans * vec4(worldPosition, 1.0);
     vec4 centerClip = u_projViewTrans * vec4(center, 1.0);
     vec2 centerPixels = (centerClip.xy / centerClip.w * 0.5 + 0.5) * u_targetSize;
