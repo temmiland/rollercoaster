@@ -13,7 +13,20 @@ import com.badlogic.gdx.utils.Array;
 
 public final class ChunkMesher {
     public static final int CHUNK_SIZE = 16;
-    public static final long ATTRIBUTES = Usage.Position | Usage.ColorUnpacked | Usage.TextureCoordinates;
+    /** Packed colour keeps a tile vertex at 24 bytes instead of 36; the shader still reads a vec4. */
+    public static final long ATTRIBUTES = Usage.Position | Usage.ColorPacked | Usage.TextureCoordinates;
+
+    private final long attributes;
+
+    public ChunkMesher() {
+        this(ATTRIBUTES);
+    }
+
+    /** Tilesets that only use the atlas can drop {@code ColorPacked}, texture-less ones the UVs. */
+    public ChunkMesher(long attributes) {
+        if ((attributes & Usage.Position) == 0) throw new IllegalArgumentException("Chunk vertices need positions");
+        this.attributes = attributes;
+    }
 
     /** One mesh/material per nonempty chunk. Caller owns the returned models and the material's textures. */
     public Array<Model> build(TileMap map, Material material) {
@@ -31,7 +44,7 @@ public final class ChunkMesher {
                             TilePrototype tile = map.getTile(x, z);
                             if (tile == null) continue;
                             if (mesh == null) mesh = builder.part("chunk-" + x0 + "-" + z0,
-                                GL20.GL_TRIANGLES, ATTRIBUTES, material);
+                                GL20.GL_TRIANGLES, attributes, material);
                             placement.setToTranslation(x - 1f, map.getHeight(x, z), z - 1f);
                             for (Node node : tile.model.nodes) append(mesh, node, placement, transform);
                         }

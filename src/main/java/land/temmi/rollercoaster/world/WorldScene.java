@@ -23,6 +23,8 @@ public final class WorldScene implements Disposable {
     private final ModelCatalog modelCatalog;
     private final Array<ModelInstance> instances = new Array<>();
     private final Array<BoundingBox> bounds = new Array<>();
+    private final Vector3 cullCenter = new Vector3();
+    private final Vector3 cullDimensions = new Vector3();
 
     public WorldScene(LoadedMap map, Array<Model> chunks, ModelCatalog modelCatalog) {
         if (map == null || chunks == null || modelCatalog == null) {
@@ -47,13 +49,11 @@ public final class WorldScene implements Disposable {
     public Array<ModelInstance> getVisibleInstances(Camera camera, Array<ModelInstance> visible) {
         if (camera == null || visible == null) throw new IllegalArgumentException("Camera and output are required");
         visible.clear();
-        Vector3 center = new Vector3();
-        Vector3 dimensions = new Vector3();
         for (int i = 0; i < instances.size; i++) {
             BoundingBox instanceBounds = bounds.get(i);
-            instanceBounds.getCenter(center);
-            instanceBounds.getDimensions(dimensions);
-            if (camera.frustum.boundsInFrustum(center, dimensions)) visible.add(instances.get(i));
+            instanceBounds.getCenter(cullCenter);
+            instanceBounds.getDimensions(cullDimensions);
+            if (camera.frustum.boundsInFrustum(cullCenter, cullDimensions)) visible.add(instances.get(i));
         }
         return visible;
     }
