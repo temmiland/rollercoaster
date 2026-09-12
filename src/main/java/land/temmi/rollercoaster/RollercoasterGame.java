@@ -4,27 +4,25 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
-import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
-import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import land.temmi.rollercoaster.render.LowResTarget;
 import land.temmi.rollercoaster.render.PixelCamera;
 import land.temmi.rollercoaster.render.WorldShaderProvider;
+import land.temmi.rollercoaster.render.BillboardRenderer;
 import land.temmi.rollercoaster.world.TestMap;
 import com.badlogic.gdx.utils.Array;
 
 public class RollercoasterGame extends ApplicationAdapter {
 
-    // Stand-in for a character sprite: a flat upright box of known world height,
-    // used to verify PixelCamera's distance formula. Real billboards come later.
     private static final float SUBJECT_WORLD_HEIGHT = 1.8f;
     private static final float SUBJECT_PIXEL_HEIGHT = 48f;
 
@@ -37,13 +35,9 @@ public class RollercoasterGame extends ApplicationAdapter {
     private ModelBatch modelBatch;
     private Array<Model> chunks;
     private final Array<ModelInstance> world = new Array<>();
-    private Model subjectModel;
-    private ModelInstance subjectInstance;
+    private Texture spriteTexture;
+    private BillboardRenderer playerSprite;
     private final Vector3 subjectFootPosition = new Vector3(0f, 0f, 0f);
-    private final Vector3 billboardCenter = new Vector3();
-    private final Vector3 billboardForward = new Vector3();
-    private final Vector3 billboardUp = new Vector3();
-    private final Vector3 billboardRight = new Vector3();
 
     @Override
     public void create() {
@@ -60,11 +54,20 @@ public class RollercoasterGame extends ApplicationAdapter {
         chunks = TestMap.create();
         for (Model chunk : chunks) world.add(new ModelInstance(chunk));
 
-        ModelBuilder builder = new ModelBuilder();
-        Material material = new Material(ColorAttribute.createDiffuse(Color.ORANGE));
-        subjectModel = builder.createBox(0.6f, SUBJECT_WORLD_HEIGHT, 0.1f, material,
-            Usage.Position | Usage.Normal);
-        subjectInstance = new ModelInstance(subjectModel);
+        Pixmap sprite = new Pixmap(16, 24, Pixmap.Format.RGBA8888);
+        sprite.setColor(0f, 0f, 0f, 0f);
+        sprite.fill();
+        sprite.setColor(0.95f, 0.55f, 0.15f, 1f);
+        sprite.fillRectangle(5, 15, 6, 7);
+        sprite.setColor(0.20f, 0.42f, 0.85f, 1f);
+        sprite.fillRectangle(4, 8, 8, 7);
+        sprite.setColor(0.15f, 0.20f, 0.32f, 1f);
+        sprite.fillRectangle(4, 3, 3, 5);
+        sprite.fillRectangle(9, 3, 3, 5);
+        spriteTexture = new Texture(sprite);
+        sprite.dispose();
+        spriteTexture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
+        playerSprite = new BillboardRenderer(spriteTexture, new TextureRegion(spriteTexture), SUBJECT_WORLD_HEIGHT);
     }
 
     @Override
@@ -84,19 +87,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         pixelCamera.follow(subjectFootPosition, SUBJECT_WORLD_HEIGHT, SUBJECT_PIXEL_HEIGHT);
         pixelCamera.snapToPixelGrid(lowRes.getWidth(), lowRes.getHeight());
 
-        // Spherical billboard alignment: the box's local axes now match the camera's
-        // right/up/forward exactly, so its world-Y height no longer foreshortens under
-        // the camera's pitch - this is what the distance formula in PixelCamera assumes.
-        billboardCenter.set(subjectFootPosition).add(0f, SUBJECT_WORLD_HEIGHT * 0.5f, 0f);
-        billboardForward.set(pixelCamera.camera.direction).scl(-1f).nor();
-        billboardUp.set(pixelCamera.camera.up).nor();
-        billboardRight.set(billboardUp).crs(billboardForward).nor();
-
-        float[] t = subjectInstance.transform.val;
-        t[Matrix4.M00] = billboardRight.x; t[Matrix4.M10] = billboardRight.y; t[Matrix4.M20] = billboardRight.z; t[Matrix4.M30] = 0f;
-        t[Matrix4.M01] = billboardUp.x; t[Matrix4.M11] = billboardUp.y; t[Matrix4.M21] = billboardUp.z; t[Matrix4.M31] = 0f;
-        t[Matrix4.M02] = billboardForward.x; t[Matrix4.M12] = billboardForward.y; t[Matrix4.M22] = billboardForward.z; t[Matrix4.M32] = 0f;
-        t[Matrix4.M03] = billboardCenter.x; t[Matrix4.M13] = billboardCenter.y; t[Matrix4.M23] = billboardCenter.z; t[Matrix4.M33] = 1f;
+        playerSprite.setPosition(subjectFootPosition.x, SUBJECT_WORLD_HEIGHT * 0.5f, subjectFootPosition.z);
 
         lowRes.begin();
         Gdx.gl.glClearColor(0.1f, 0.12f, 0.16f, 1f);
@@ -104,7 +95,7 @@ public class RollercoasterGame extends ApplicationAdapter {
 
         modelBatch.begin(pixelCamera.camera);
         modelBatch.render(world);
-        modelBatch.render(subjectInstance);
+        modelBatch.render(playerSprite);
         modelBatch.end();
 
         drawPixelRuler();
@@ -135,7 +126,8 @@ public class RollercoasterGame extends ApplicationAdapter {
         blitBatch.dispose();
         shapes.dispose();
         modelBatch.dispose();
-        subjectModel.dispose();
+        playerSprite.dispose();
+        spriteTexture.dispose();
         for (Model chunk : chunks) chunk.dispose();
     }
 }
