@@ -73,7 +73,7 @@ public final class TestMap {
         ModelBuilder builder = new ModelBuilder();
         builder.begin();
         MeshPartBuilder mesh = builder.part("house", GL20.GL_TRIANGLES, ChunkMesher.ATTRIBUTES, new Material());
-        mesh.setVertexTransform(new Matrix4().setToTranslation(-0.5f, 0f, -0.5f));
+        mesh.setVertexTransform(new Matrix4().setToTranslation(-1f, 0f, -1f));
         mesh.setColor(0.84f, 0.78f, 0.59f, 1f);
         mesh.box(0.5f, 1.4f, 0.5f, 4f, 2.8f, 3f);
         mesh.setColor(0.55f, 0.22f, 0.18f, 1f);
