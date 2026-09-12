@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Pixmap;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -80,10 +81,27 @@ public class LowResTarget implements Disposable {
             builder.addBasicDepthRenderBuffer();
         }
         sourceFbo = builder.build();
-        sourceFbo.getColorBufferTexture().setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+        bindSourceTexture();
+    }
 
-        sourceRegion.setRegion(sourceFbo.getColorBufferTexture());
+    /**
+     * Re-points the cached region at the FBO's current colour texture and restores Nearest
+     * filtering. After a context loss libGDX rebuilds managed framebuffers with a brand new,
+     * Linear-filtered texture, which would otherwise leave the region pointing at a dead
+     * texture and blur the pixel look.
+     */
+    private void bindSourceTexture() {
+        Texture color = sourceFbo.getColorBufferTexture();
+        color.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+        sourceRegion.setRegion(color);
         sourceRegion.flip(false, true); // FBO textures are V-flipped relative to the screen
+    }
+
+    private void bindIntermediateTexture() {
+        Texture color = intermediateFbo.getColorBufferTexture();
+        color.setFilter(TextureFilter.Linear, TextureFilter.Linear);
+        intermediateRegion.setRegion(color);
+        intermediateRegion.flip(false, true);
     }
 
     private void rebuildIntermediate(int targetW, int targetH) {
@@ -99,10 +117,7 @@ public class LowResTarget implements Disposable {
         int height = internalHeight * intScale;
 
         intermediateFbo = new FrameBuffer(Pixmap.Format.RGB888, width, height, false);
-        intermediateFbo.getColorBufferTexture().setFilter(TextureFilter.Linear, TextureFilter.Linear);
-
-        intermediateRegion.setRegion(intermediateFbo.getColorBufferTexture());
-        intermediateRegion.flip(false, true);
+        bindIntermediateTexture();
     }
 
     public void begin() {
@@ -114,6 +129,8 @@ public class LowResTarget implements Disposable {
     }
 
     public void blitToScreen(SpriteBatch batch) {
+        if (sourceRegion.getTexture() != sourceFbo.getColorBufferTexture()) bindSourceTexture();
+
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
@@ -135,6 +152,8 @@ public class LowResTarget implements Disposable {
             rebuildIntermediate(targetW, targetH);
             lastTargetW = targetW;
             lastTargetH = targetH;
+        } else if (intermediateRegion.getTexture() != intermediateFbo.getColorBufferTexture()) {
+            bindIntermediateTexture();
         }
 
         // Pass 1: nearest-neighbour integer upscale, still pixel-perfect.
