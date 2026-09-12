@@ -14,6 +14,9 @@ import land.temmi.rollercoaster.asset.ProceduralModels;
 
 /** Procedural render fixture with four chunks, a path, a plateau and a house. */
 public final class TestMap {
+    private static final ModelCatalog MODEL_CATALOG = new ModelCatalog()
+        .register("house", ProceduralModels::house,
+            ProceduralModels.HOUSE_OFFSET_X, 0f, ProceduralModels.HOUSE_OFFSET_Z);
     private static LoadedMap loadedMap;
     private static TileMap loadedTiles;
     private TestMap() { }
@@ -56,16 +59,19 @@ public final class TestMap {
 
     public static Array<Model> createPropModels() {
         Array<Model> models = new Array<>();
-        ModelCatalog catalog = new ModelCatalog().register("house", ProceduralModels::house);
         for (MapProp prop : getLoadedMap().props) {
             try {
-                models.add(catalog.create(prop.model));
+                models.add(MODEL_CATALOG.create(prop.model));
             } catch (RuntimeException failure) {
                 for (Model model : models) model.dispose();
                 throw failure;
             }
         }
         return models;
+    }
+
+    public static ModelCatalog getModelCatalog() {
+        return MODEL_CATALOG;
     }
 
     private static TilePrototype ground(Color color, float thickness) {

@@ -25,6 +25,7 @@ import land.temmi.rollercoaster.world.TestMap;
 import land.temmi.rollercoaster.world.LoadedMap;
 import land.temmi.rollercoaster.world.MapEntity;
 import land.temmi.rollercoaster.world.MapProp;
+import land.temmi.rollercoaster.asset.ModelCatalog;
 import land.temmi.rollercoaster.actor.GridActor;
 import land.temmi.rollercoaster.actor.SpriteAnimation;
 import land.temmi.rollercoaster.input.InputSource;
@@ -72,11 +73,17 @@ public class RollercoasterGame extends ApplicationAdapter {
         for (Model chunk : chunks) world.add(new ModelInstance(chunk));
         LoadedMap map = TestMap.getLoadedMap();
         propModels = TestMap.createPropModels();
+        ModelCatalog catalog = TestMap.getModelCatalog();
         for (int i = 0; i < propModels.size; i++) {
             MapProp prop = map.props.get(i);
             ModelInstance instance = new ModelInstance(propModels.get(i));
-            instance.transform.setToTranslation(prop.x - 1f,
-                map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)), prop.z - 1f)
+            ModelCatalog.Definition definition = catalog.definition(prop.model);
+            float radians = prop.rotation * MathUtils.degreesToRadians;
+            float offsetX = definition.offsetX * MathUtils.cos(radians) - definition.offsetZ * MathUtils.sin(radians);
+            float offsetZ = definition.offsetX * MathUtils.sin(radians) + definition.offsetZ * MathUtils.cos(radians);
+            instance.transform.setToTranslation(prop.x + offsetX,
+                map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)) + definition.offsetY,
+                prop.z + offsetZ)
                 .rotate(Vector3.Y, prop.rotation);
             world.add(instance);
         }

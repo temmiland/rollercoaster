@@ -10,6 +10,9 @@ import land.temmi.rollercoaster.world.ChunkMesher;
 
 /** Temporary model factories used until external GLTF assets are connected. */
 public final class ProceduralModels {
+    public static final float HOUSE_OFFSET_X = -1f;
+    public static final float HOUSE_OFFSET_Z = -1f;
+
     private ProceduralModels() { }
 
     public static Model house() {
