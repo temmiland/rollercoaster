@@ -1,12 +1,14 @@
 package land.temmi.rollercoaster.render;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Disposable;
 
@@ -16,6 +18,11 @@ public class LowResTarget implements Disposable {
     // consistent across landscape and portrait devices.
     private static final int MINOR_AXIS_PX = 360;
 
+    // Beyond this long:short ratio (in either direction), stop exposing more world
+    // and letterbox instead - true ultrawide/super-ultrawide monitors and extreme
+    // elongated-portrait phones, not the normal device variance this fills for.
+    private static final float MAX_ASPECT = 16f / 9f;
+
     private final TextureRegion sourceRegion = new TextureRegion();
     private final TextureRegion intermediateRegion = new TextureRegion();
     private final Matrix4 passProjection = new Matrix4();
@@ -23,31 +30,36 @@ public class LowResTarget implements Disposable {
     private FrameBuffer sourceFbo;
     private int internalWidth;
     private int internalHeight;
+    private boolean letterboxed;
 
     private FrameBuffer intermediateFbo;
-    private int lastScreenW = -1;
-    private int lastScreenH = -1;
+    private int lastTargetW = -1;
+    private int lastTargetH = -1;
 
     public void resize(int windowWidth, int windowHeight) {
         if (windowWidth <= 0 || windowHeight <= 0) {
             return; // e.g. a minimized window
         }
 
+        float rawAspect = windowWidth / (float) windowHeight;
+        float aspect = MathUtils.clamp(rawAspect, 1f / MAX_ASPECT, MAX_ASPECT);
+        letterboxed = aspect != rawAspect;
+
         int width;
         int height;
-        if (windowWidth >= windowHeight) {
+        if (aspect >= 1f) {
             height = MINOR_AXIS_PX;
-            width = Math.round(height * (windowWidth / (float) windowHeight));
+            width = Math.round(height * aspect);
         } else {
             width = MINOR_AXIS_PX;
-            height = Math.round(width * (windowHeight / (float) windowWidth));
+            height = Math.round(width / aspect);
         }
 
         if (sourceFbo == null || width != internalWidth || height != internalHeight) {
             internalWidth = width;
             internalHeight = height;
             rebuildSource();
-            lastScreenW = -1; // intScale depends on internalWidth/Height too; force an intermediate rebuild
+            lastTargetW = -1; // intScale depends on internalWidth/Height too; force an intermediate rebuild
         }
     }
 
@@ -71,15 +83,15 @@ public class LowResTarget implements Disposable {
         sourceRegion.flip(false, true); // FBO textures are V-flipped relative to the screen
     }
 
-    private void rebuildIntermediate(int screenW, int screenH) {
+    private void rebuildIntermediate(int targetW, int targetH) {
         if (intermediateFbo != null) {
             intermediateFbo.dispose();
         }
 
-        // Largest whole-number upscale that still fits the screen: this pass stays
-        // pixel-perfect. Only the leftover fractional remainder (see blitToScreen)
-        // gets blurred, instead of blurring the whole low-res image directly.
-        int intScale = Math.max(1, Math.min(screenW / internalWidth, screenH / internalHeight));
+        // Largest whole-number upscale that still fits the target area: this pass
+        // stays pixel-perfect. Only the leftover fractional remainder (see
+        // blitToScreen) gets blurred, instead of blurring the whole low-res image.
+        int intScale = Math.max(1, Math.min(targetW / internalWidth, targetH / internalHeight));
         int width = internalWidth * intScale;
         int height = internalHeight * intScale;
 
@@ -102,10 +114,24 @@ public class LowResTarget implements Disposable {
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
-        if (intermediateFbo == null || screenW != lastScreenW || screenH != lastScreenH) {
-            rebuildIntermediate(screenW, screenH);
-            lastScreenW = screenW;
-            lastScreenH = screenH;
+        int targetW = screenW;
+        int targetH = screenH;
+        int vpX = 0;
+        int vpY = 0;
+        if (letterboxed) {
+            // Aspect was capped in resize(); fit it instead of stretching to fill,
+            // and letterbox the remainder in black.
+            float scale = Math.min(screenW / (float) internalWidth, screenH / (float) internalHeight);
+            targetW = Math.round(internalWidth * scale);
+            targetH = Math.round(internalHeight * scale);
+            vpX = (screenW - targetW) / 2;
+            vpY = (screenH - targetH) / 2;
+        }
+
+        if (intermediateFbo == null || targetW != lastTargetW || targetH != lastTargetH) {
+            rebuildIntermediate(targetW, targetH);
+            lastTargetW = targetW;
+            lastTargetH = targetH;
         }
 
         // Pass 1: nearest-neighbour integer upscale, still pixel-perfect.
@@ -117,8 +143,13 @@ public class LowResTarget implements Disposable {
         batch.end();
         intermediateFbo.end();
 
-        // Pass 2: small fractional stretch to fill the screen exactly; only this step blurs.
-        Gdx.gl.glViewport(0, 0, screenW, screenH);
+        // Pass 2: small fractional stretch to fill the target area; only this step blurs.
+        if (letterboxed) {
+            Gdx.gl.glViewport(0, 0, screenW, screenH);
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        }
+        Gdx.gl.glViewport(vpX, vpY, targetW, targetH);
         passProjection.setToOrtho2D(0, 0, intermediateFbo.getWidth(), intermediateFbo.getHeight());
         batch.setProjectionMatrix(passProjection);
         batch.begin();
