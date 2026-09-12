@@ -81,6 +81,7 @@ public final class WorldScene implements Disposable {
         ModelDefinition definition = modelCatalog.definition(prop.model);
         applyCollision(prop, definition);
         ModelInstance instance = new ModelInstance(modelCatalog.create(prop.model));
+        instance.userData = prop;
         float radians = prop.rotation * MathUtils.degreesToRadians;
         float cos = MathUtils.cos(radians);
         float sin = MathUtils.sin(radians);
