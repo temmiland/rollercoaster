@@ -15,6 +15,12 @@ final class BillboardShader implements Shader {
     private ShaderProgram program;
     private RenderContext context;
     private Camera camera;
+    private final LightingEnvironment lighting;
+    private final LightingUniforms lightingUniforms = new LightingUniforms();
+
+    BillboardShader(LightingEnvironment lighting) {
+        this.lighting = lighting;
+    }
 
     @Override
     public void init() {
@@ -39,6 +45,7 @@ final class BillboardShader implements Shader {
         float rightLength = (float) Math.sqrt(camera.direction.x * camera.direction.x + camera.direction.z * camera.direction.z);
         program.setUniformf("u_billboardRight", -camera.direction.z / rightLength, 0f, camera.direction.x / rightLength);
         program.setUniformf("u_heightScale", 1f / Math.max(0.001f, camera.up.y));
+        lightingUniforms.apply(program, lighting);
         context.setDepthTest(GL20.GL_LEQUAL);
         context.setDepthMask(true);
         context.setCullFace(GL20.GL_NONE);

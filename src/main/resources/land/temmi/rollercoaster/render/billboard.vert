@@ -7,6 +7,8 @@ uniform vec3 u_billboardRight;
 uniform float u_heightScale;
 uniform vec4 u_uvTransform;
 varying vec2 v_uv;
+varying vec3 v_worldPosition;
+varying vec3 v_normal;
 
 void main() {
     vec3 center = u_worldTrans[3].xyz;
@@ -14,6 +16,8 @@ void main() {
     float height = length(u_worldTrans[1].xyz);
     vec3 worldPosition = center + u_billboardRight * a_position.x * width
         + vec3(0.0, (a_position.y + 0.5) * height * u_heightScale, 0.0);
+    v_worldPosition = worldPosition;
+    v_normal = normalize(cross(vec3(0.0, 1.0, 0.0), u_billboardRight));
     vec4 clip = u_projViewTrans * vec4(worldPosition, 1.0);
     vec4 centerClip = u_projViewTrans * vec4(center, 1.0);
     vec2 centerPixels = (centerClip.xy / centerClip.w * 0.5 + 0.5) * u_targetSize;

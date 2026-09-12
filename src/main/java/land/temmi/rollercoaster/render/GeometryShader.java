@@ -17,12 +17,17 @@ import com.badlogic.gdx.utils.GdxRuntimeException;
 final class GeometryShader implements Shader {
     private final boolean colored;
     private final boolean textured;
+    private final boolean normals;
     private ShaderProgram program;
     private RenderContext context;
+    private final LightingEnvironment lighting;
+    private final LightingUniforms lightingUniforms = new LightingUniforms();
 
-    GeometryShader(Renderable renderable) {
+    GeometryShader(LightingEnvironment lighting, Renderable renderable) {
+        this.lighting = lighting;
         colored = hasColor(renderable);
         textured = renderable.material.has(TextureAttribute.Diffuse);
+        normals = (renderable.meshPart.mesh.getVertexAttributes().getMask() & Usage.Normal) != 0;
         if (!canRender(renderable)) {
             throw new GdxRuntimeException("World geometry requires positions, UVs for textures, and an opaque material");
         }
@@ -36,7 +41,8 @@ final class GeometryShader implements Shader {
     @Override
     public void init() {
         String prefix = (colored ? "#define vertexColor\n" : "")
-            + (textured ? "#define diffuseTexture\n" : "");
+            + (textured ? "#define diffuseTexture\n" : "")
+            + (normals ? "#define vertexNormal\n" : "");
         String path = "land/temmi/rollercoaster/render/";
         program = new ShaderProgram(prefix + Gdx.files.classpath(path + "geometry.vert").readString("UTF-8"),
             prefix + Gdx.files.classpath(path + "geometry.frag").readString("UTF-8"));
@@ -52,6 +58,7 @@ final class GeometryShader implements Shader {
         this.context = context;
         program.bind();
         program.setUniformMatrix("u_projViewTrans", camera.combined);
+        lightingUniforms.apply(program, lighting);
         context.setDepthTest(GL20.GL_LEQUAL);
         context.setDepthMask(true);
         context.setCullFace(GL20.GL_BACK);
