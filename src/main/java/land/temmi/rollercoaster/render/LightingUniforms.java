@@ -7,8 +7,9 @@ import com.badlogic.gdx.math.Vector3;
 /** Uploads one lighting environment to a world or billboard shader. */
 final class LightingUniforms {
     private final float[] positions = new float[LightingEnvironment.MAX_POINT_LIGHTS * 3];
+    private final float[] directions = new float[LightingEnvironment.MAX_POINT_LIGHTS * 3];
     private final float[] colors = new float[LightingEnvironment.MAX_POINT_LIGHTS * 4];
-    private final float[] parameters = new float[LightingEnvironment.MAX_POINT_LIGHTS * 2];
+    private final float[] parameters = new float[LightingEnvironment.MAX_POINT_LIGHTS * 4];
 
     void apply(ShaderProgram program, LightingEnvironment environment) {
         Color ambient = environment.getAmbientColor();
@@ -21,6 +22,7 @@ final class LightingUniforms {
         int count = Math.min(environment.getPointLights().size, LightingEnvironment.MAX_POINT_LIGHTS);
         int colorIndex = 0;
         int positionIndex = 0;
+        int directionIndex = 0;
         int parameterIndex = 0;
         for (int i = 0; i < count; i++) {
             PointLightSource light = environment.getPointLights().get(i);
@@ -28,19 +30,25 @@ final class LightingUniforms {
             positions[positionIndex++] = light.position.x;
             positions[positionIndex++] = light.position.y;
             positions[positionIndex++] = light.position.z;
+            directions[directionIndex++] = light.direction.x;
+            directions[directionIndex++] = light.direction.y;
+            directions[directionIndex++] = light.direction.z;
             colors[colorIndex++] = light.color.r;
             colors[colorIndex++] = light.color.g;
             colors[colorIndex++] = light.color.b;
             colors[colorIndex++] = light.intensity;
             parameters[parameterIndex++] = light.range;
-            parameters[parameterIndex++] = 0f;
+            parameters[parameterIndex++] = light.isSpot() ? 1f : 0f;
+            parameters[parameterIndex++] = light.getInnerConeCos();
+            parameters[parameterIndex++] = light.getOuterConeCos();
         }
         int active = colorIndex / 4;
         program.setUniformi("u_pointCount", active);
         if (active > 0) {
             program.setUniform3fv("u_pointPosition", positions, 0, active * 3);
+            program.setUniform3fv("u_pointDirection", directions, 0, active * 3);
             program.setUniform4fv("u_pointLight", colors, 0, active * 4);
-            program.setUniform2fv("u_pointParams", parameters, 0, active * 2);
+            program.setUniform4fv("u_pointParams", parameters, 0, active * 4);
         }
     }
 }

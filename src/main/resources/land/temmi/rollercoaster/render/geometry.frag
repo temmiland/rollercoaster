@@ -14,8 +14,9 @@ uniform vec3 u_sunDirection;
 uniform vec4 u_sunLight;
 uniform int u_pointCount;
 uniform vec3 u_pointPosition[8];
+uniform vec3 u_pointDirection[8];
 uniform vec4 u_pointLight[8];
-uniform vec2 u_pointParams[8];
+uniform vec4 u_pointParams[8];
 #ifdef vertexColor
 varying VARYING_PRECISION vec4 v_color;
 #endif
@@ -34,8 +35,13 @@ vec3 lightFactor() {
         float distanceToLight = length(toLight);
         float range = max(0.001, u_pointParams[i].x);
         float attenuation = max(0.0, 1.0 - distanceToLight / range);
+        float cone = 1.0;
+        if (u_pointParams[i].y > 0.5) {
+            float angle = dot(normalize(-toLight), normalize(u_pointDirection[i]));
+            cone = smoothstep(u_pointParams[i].w, u_pointParams[i].z, angle);
+        }
         result += u_pointLight[i].rgb * u_pointLight[i].a * attenuation * attenuation
-            * max(dot(normal, normalize(toLight)), 0.0);
+            * cone * max(dot(normal, normalize(toLight)), 0.0);
     }
     return min(result, vec3(1.0));
 }
