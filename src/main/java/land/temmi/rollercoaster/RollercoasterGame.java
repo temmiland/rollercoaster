@@ -70,8 +70,15 @@ public class RollercoasterGame extends ApplicationAdapter {
         pixelCamera.resize(lowRes.getWidth(), lowRes.getHeight());
     }
 
+    private float driftTime;
+
     @Override
     public void render() {
+        // Slow drift so the camera sits at arbitrary sub-pixel offsets, which is what
+        // pixel-snapping has to absorb. Replaced by real input in a later step.
+        driftTime += Gdx.graphics.getDeltaTime();
+        subjectFootPosition.x = driftTime * 0.05f;
+
         pixelCamera.follow(subjectFootPosition, SUBJECT_WORLD_HEIGHT, SUBJECT_PIXEL_HEIGHT);
         pixelCamera.snapToPixelGrid(lowRes.getWidth(), lowRes.getHeight());
 
