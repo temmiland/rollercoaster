@@ -43,6 +43,8 @@ the shade.
 Point/spot lights currently do not cast shadows or respect wall occlusion. Billboards
 receive sun shadows but are not supported as casters. There is no bloom or indirect
 illumination. Device GL validation is still needed; desktop tests exercise GL 2.1.
+Billboards use a restrained upward fill for near-overhead lights, so characters remain
+readable with the short shadow vector while front-facing light still controls the response.
 
 ## Materials and lamps
 
