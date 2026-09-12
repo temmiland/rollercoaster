@@ -13,8 +13,13 @@ import com.badlogic.gdx.utils.Array;
 
 public final class ChunkMesher {
     public static final int CHUNK_SIZE = 16;
-    /** Packed colour keeps a tile vertex at 24 bytes instead of 36; the shader still reads a vec4. */
-    public static final long ATTRIBUTES = Usage.Position | Usage.ColorPacked | Usage.TextureCoordinates;
+    /**
+     * Packed colour keeps a tile vertex small; the shader still reads a vec4. Normals are part of
+     * the default set because the world shader falls back to a constant up vector without them,
+     * which would light ramps and cliff faces as if they were flat ground.
+     */
+    public static final long ATTRIBUTES =
+        Usage.Position | Usage.Normal | Usage.ColorPacked | Usage.TextureCoordinates;
 
     private final long attributes;
 

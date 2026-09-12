@@ -25,7 +25,9 @@ void main() {
     vec4 worldPosition = u_worldTrans * vec4(a_position, 1.0);
     v_worldPosition = worldPosition.xyz;
 #ifdef vertexNormal
-    v_normal = normalize(mat3(u_worldTrans) * a_normal);
+    // w = 0 drops the translation, same as mat3(u_worldTrans) but legal in GLSL 110,
+    // which is what a desktop GL 2.1 context compiles these shaders as.
+    v_normal = normalize((u_worldTrans * vec4(a_normal, 0.0)).xyz);
 #else
     v_normal = vec3(0.0, 1.0, 0.0);
 #endif
