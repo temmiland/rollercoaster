@@ -45,7 +45,9 @@ float decodeDepth(vec4 encoded) {
 }
 
 float shadowVisibility() {
-    if (u_shadowEnabled == 0 || u_shadowReceiver == 0) return 1.0;
+    // The map is a floor shadow. Vertical cliff and prop faces stay lit by the
+    // environment even when they belong to a terrain chunk.
+    if (u_shadowEnabled == 0 || u_shadowReceiver == 0 || normalize(v_normal).y < 0.5) return 1.0;
     vec3 projected = v_shadowPosition.xyz / v_shadowPosition.w;
     if (projected.x <= 0.0 || projected.x >= 1.0 || projected.y <= 0.0 || projected.y >= 1.0
         || projected.z <= 0.0 || projected.z >= 1.0) return 1.0;
@@ -72,6 +74,11 @@ vec3 lightFactor() {
     sunVisibility = shadowVisibility();
 #endif
     result += u_sunLight.rgb * u_sunLight.a * sunVisibility * max(dot(normal, normalize(u_sunDirection)), 0.0);
+    // A nearly overhead sun keeps the cast shadow short but would leave vertical
+    // surfaces with ambient light only. A restrained sky fill keeps those sides
+    // readable without changing the colour of upward-facing ground.
+    float sideFill = 1.0 - smoothstep(0.25, 0.85, max(normal.y, 0.0));
+    result += u_sunLight.rgb * u_sunLight.a * 0.55 * sideFill;
     for (int i = 0; i < 8; i++) {
         if (i >= u_pointCount) break;
         vec3 toLight = u_pointPosition[i] - v_worldPosition;

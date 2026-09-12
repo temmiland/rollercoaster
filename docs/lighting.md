@@ -48,6 +48,9 @@ are not supported as shadow casters or receivers. There is no bloom or indirect
 illumination. Device GL validation is still needed; desktop tests exercise GL 2.1.
 Billboards use a restrained upward fill for near-overhead lights, so characters remain
 readable with the short shadow vector while front-facing light still controls the response.
+World geometry gets the same kind of restrained sky fill on vertical faces: the nearly overhead
+sun keeps shadows short, while walls and cliff sides stay readable instead of falling back to
+ambient light alone.
 
 ## Materials and lamps
 
