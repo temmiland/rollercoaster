@@ -7,44 +7,47 @@ import com.badlogic.gdx.utils.ObjectMap;
 public final class ModelCatalog {
     public interface Factory { Model create(); }
 
-    public static final class Definition {
-        public final float offsetX;
-        public final float offsetY;
-        public final float offsetZ;
+    private static final class Entry {
+        public final ModelDefinition definition;
         private final Factory factory;
 
-        private Definition(Factory factory, float offsetX, float offsetY, float offsetZ) {
+        private Entry(ModelDefinition definition, Factory factory) {
+            this.definition = definition;
             this.factory = factory;
-            this.offsetX = offsetX;
-            this.offsetY = offsetY;
-            this.offsetZ = offsetZ;
         }
 
         private Model create() { return factory.create(); }
     }
 
-    private final ObjectMap<String, Definition> definitions = new ObjectMap<>();
+    private final ObjectMap<String, Entry> entries = new ObjectMap<>();
 
     public ModelCatalog register(String id, Factory factory) {
-        return register(id, factory, 0f, 0f, 0f);
+        return register(new ModelDefinition(id, "procedural", 0f, 0f, 0f, 0, 0, 0, 0), factory);
     }
 
     public ModelCatalog register(String id, Factory factory, float offsetX, float offsetY, float offsetZ) {
-        if (id == null || id.length() == 0 || factory == null) {
-            throw new IllegalArgumentException("Model ID and factory are required");
-        }
-        if (definitions.containsKey(id)) throw new IllegalArgumentException("Duplicate model ID: " + id);
-        definitions.put(id, new Definition(factory, offsetX, offsetY, offsetZ));
+        return register(new ModelDefinition(id, "procedural", offsetX, offsetY, offsetZ, 0, 0, 0, 0), factory);
+    }
+
+    public ModelCatalog register(ModelDefinition definition, Factory factory) {
+        if (definition == null || factory == null) throw new IllegalArgumentException("Model definition and factory are required");
+        String id = definition.id;
+        if (entries.containsKey(id)) throw new IllegalArgumentException("Duplicate model ID: " + id);
+        entries.put(id, new Entry(definition, factory));
         return this;
     }
 
     public Model create(String id) {
-        return definition(id).create();
+        return entry(id).create();
     }
 
-    public Definition definition(String id) {
-        Definition definition = definitions.get(id);
-        if (definition == null) throw new IllegalArgumentException("Unknown model ID: " + id);
-        return definition;
+    public ModelDefinition definition(String id) {
+        return entry(id).definition;
+    }
+
+    private Entry entry(String id) {
+        Entry entry = entries.get(id);
+        if (entry == null) throw new IllegalArgumentException("Unknown model ID: " + id);
+        return entry;
     }
 }

@@ -9,14 +9,15 @@ import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.MathUtils;
 import land.temmi.rollercoaster.asset.ModelCatalog;
+import land.temmi.rollercoaster.asset.ModelDefinition;
+import land.temmi.rollercoaster.asset.ModelManifest;
 import land.temmi.rollercoaster.asset.ProceduralModels;
 
 /** Procedural render fixture with four chunks, a path, a plateau and a house. */
 public final class TestMap {
-    private static final ModelCatalog MODEL_CATALOG = new ModelCatalog()
-        .register("house", ProceduralModels::house,
-            ProceduralModels.HOUSE_OFFSET_X, 0f, ProceduralModels.HOUSE_OFFSET_Z);
+    private static ModelCatalog modelCatalog;
     private static LoadedMap loadedMap;
     private static TileMap loadedTiles;
     private TestMap() { }
@@ -61,7 +62,9 @@ public final class TestMap {
         Array<Model> models = new Array<>();
         for (MapProp prop : getLoadedMap().props) {
             try {
-                models.add(MODEL_CATALOG.create(prop.model));
+                ModelDefinition definition = getModelCatalog().definition(prop.model);
+                validateCollision(prop, definition);
+                models.add(getModelCatalog().create(prop.model));
             } catch (RuntimeException failure) {
                 for (Model model : models) model.dispose();
                 throw failure;
@@ -71,7 +74,31 @@ public final class TestMap {
     }
 
     public static ModelCatalog getModelCatalog() {
-        return MODEL_CATALOG;
+        if (modelCatalog == null) {
+            modelCatalog = new ModelCatalog();
+            for (ModelDefinition definition : ModelManifest.load(Gdx.files.classpath("maps/models.json"))) {
+                if ("procedural:house".equals(definition.source)) {
+                    modelCatalog.register(definition, ProceduralModels::house);
+                } else {
+                    throw new IllegalArgumentException("Unknown model source: " + definition.source);
+                }
+            }
+        }
+        return modelCatalog;
+    }
+
+    private static void validateCollision(MapProp prop, ModelDefinition definition) {
+        if (Math.abs(prop.rotation % 360f) > 0.001f) return;
+        for (int z = definition.collisionMinZ; z <= definition.collisionMaxZ; z++) {
+            for (int x = definition.collisionMinX; x <= definition.collisionMaxX; x++) {
+                int mapX = MathUtils.floor(prop.x) + x;
+                int mapZ = MathUtils.floor(prop.z) + z;
+                if (!loadedTiles.isBlocked(mapX, mapZ)) {
+                    throw new IllegalStateException("Prop collision footprint is not blocked: " + definition.id
+                        + " at " + mapX + "," + mapZ);
+                }
+            }
+        }
     }
 
     private static TilePrototype ground(Color color, float thickness) {
