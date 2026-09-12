@@ -5,6 +5,8 @@ import land.temmi.rollercoaster.input.MoveIntent;
 
 /** Moves one whole tile at a time while exposing smooth world coordinates. */
 public final class GridActor {
+    private static final float WORLD_OFFSET_X = -0.5f;
+    private static final float WORLD_OFFSET_Z = -0.5f;
     public interface TileAccess { boolean canEnter(int x, int z); }
 
     private final int width;
@@ -33,7 +35,7 @@ public final class GridActor {
         tileZ = targetZ = z;
         progress = 0f;
         moving = false;
-        position.set(x, 0f, z);
+        position.set(x + WORLD_OFFSET_X, 0f, z + WORLD_OFFSET_Z);
     }
 
     public void setTileAccess(TileAccess tileAccess) { this.tileAccess = tileAccess; }
@@ -41,11 +43,12 @@ public final class GridActor {
     public void update(float delta, MoveIntent intent) {
         if (moving) {
             progress = Math.min(1f, progress + Math.max(0f, delta) * speed);
-            position.set(tileX + (targetX - tileX) * progress, 0f, tileZ + (targetZ - tileZ) * progress);
+            position.set(tileX + (targetX - tileX) * progress + WORLD_OFFSET_X, 0f,
+                tileZ + (targetZ - tileZ) * progress + WORLD_OFFSET_Z);
             if (progress >= 1f) {
                 tileX = targetX;
                 tileZ = targetZ;
-                position.set(tileX, 0f, tileZ);
+                position.set(tileX + WORLD_OFFSET_X, 0f, tileZ + WORLD_OFFSET_Z);
                 moving = false;
             }
             return;
