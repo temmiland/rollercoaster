@@ -36,6 +36,7 @@ public final class TerrainSurface {
     public float heightAt(float worldX, float worldZ) {
         int x = MathUtils.clamp(tileX(worldX), 0, map.getWidth() - 1);
         int z = MathUtils.clamp(tileZ(worldZ), 0, map.getDepth() - 1);
+        if (map.hasWalkableSurface(x, z)) return map.getWalkableSurfaceHeight(x, z);
         float localX = worldX - (x - 1);
         float localZ = worldZ - (z - 1);
         return map.getHeight(x, z)
@@ -44,11 +45,28 @@ public final class TerrainSurface {
 
     /** Surface height at a tile's centre, which is the tile's stored height for every shape. */
     public float heightAtCenter(int x, int z) {
-        return map.getHeight(x, z);
+        return map.hasWalkableSurface(x, z) ? map.getWalkableSurfaceHeight(x, z) : map.getHeight(x, z);
+    }
+
+    /** Surface height nearest to a reference level when a tile has a raised prop surface. */
+    public float heightAtCenter(int x, int z, float referenceHeight) {
+        if (!map.hasWalkableSurface(x, z)) return map.getHeight(x, z);
+        float base = map.getHeight(x, z);
+        float raised = map.getWalkableSurfaceHeight(x, z);
+        return Math.abs(raised - referenceHeight) < Math.abs(base - referenceHeight) ? raised : base;
     }
 
     /** Surface height at the tile edge facing {@code dx}/{@code dz}. */
     public float heightAtEdge(int x, int z, int dx, int dz) {
+        if (map.hasWalkableSurface(x, z)) return map.getWalkableSurfaceHeight(x, z);
         return map.getHeight(x, z) + map.getShape(x, z).edgeOffset(dx, dz);
+    }
+
+    /** Edge height nearest to a reference level for a tile with a raised prop surface. */
+    public float heightAtEdge(int x, int z, int dx, int dz, float referenceHeight) {
+        if (!map.hasWalkableSurface(x, z)) return map.getHeight(x, z) + map.getShape(x, z).edgeOffset(dx, dz);
+        float base = map.getHeight(x, z) + map.getShape(x, z).edgeOffset(dx, dz);
+        float raised = map.getWalkableSurfaceHeight(x, z);
+        return Math.abs(raised - referenceHeight) < Math.abs(base - referenceHeight) ? raised : base;
     }
 }

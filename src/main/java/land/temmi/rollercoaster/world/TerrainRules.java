@@ -64,7 +64,28 @@ public final class TerrainRules implements GridActor.TileAccess {
     }
 
     @Override
+    public boolean canStep(int fromX, int fromZ, int dx, int dz, float currentHeight) {
+        return step(fromX, fromZ, dx, dz, currentHeight) == Step.ALLOWED;
+    }
+
+    @Override
     public float heightAt(int x, int z) {
         return map.contains(x, z) ? surface.heightAtCenter(x, z) : 0f;
+    }
+
+    @Override
+    public float heightAt(int x, int z, float currentHeight) {
+        return map.contains(x, z) ? surface.heightAtCenter(x, z, currentHeight) : 0f;
+    }
+
+    private Step step(int fromX, int fromZ, int dx, int dz, float currentHeight) {
+        int toX = fromX + dx;
+        int toZ = fromZ + dz;
+        if (!map.contains(fromX, fromZ) || !map.contains(toX, toZ)) return Step.OUTSIDE_MAP;
+        if (!map.isWalkable(toX, toZ)) return Step.BLOCKED;
+        float exit = surface.heightAtEdge(fromX, fromZ, dx, dz, currentHeight);
+        float entry = surface.heightAtEdge(toX, toZ, -dx, -dz, currentHeight);
+        if (Math.abs(entry - exit) > maxStepHeight) return Step.TOO_STEEP;
+        return Step.ALLOWED;
     }
 }

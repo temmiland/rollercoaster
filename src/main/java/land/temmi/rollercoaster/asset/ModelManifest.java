@@ -37,7 +37,8 @@ public final class ModelManifest {
                 boundsMin.getFloat(0), boundsMin.getFloat(1), boundsMin.getFloat(2),
                 boundsMax.getFloat(0), boundsMax.getFloat(1), boundsMax.getFloat(2),
                 min.getInt(0), max.getInt(0), min.getInt(1), max.getInt(1),
-                model.getBoolean("alignToSlope", false)));
+                model.getBoolean("alignToSlope", false), model.getBoolean("walkable", false),
+                model.getFloat("walkHeight", 0f)));
         }
         return definitions;
     }

@@ -79,7 +79,8 @@ public final class WorldScene implements Disposable {
 
     private void addProp(MapProp prop) {
         ModelDefinition definition = modelCatalog.definition(prop.model);
-        applyCollision(prop, definition);
+        float groundY = surface.heightAt(prop.x - 0.5f, prop.z - 0.5f);
+        applyCollision(prop, definition, groundY);
         ModelInstance instance = new ModelInstance(modelCatalog.create(prop.model));
         instance.userData = prop;
         float radians = prop.rotation * MathUtils.degreesToRadians;
@@ -92,7 +93,6 @@ public final class WorldScene implements Disposable {
         // Sampling there lets a prop on a ramp sit at the sloped surface instead of a tile step.
         float worldX = prop.x + offsetX;
         float worldZ = prop.z + offsetZ;
-        float groundY = surface.heightAt(prop.x - 0.5f, prop.z - 0.5f);
         instance.transform.setToTranslation(worldX, groundY + prop.elevation + definition.offsetY, worldZ);
         if (definition.alignToSlope) alignToSlope(instance, prop);
         instance.transform.scale(definition.scale, definition.scale, definition.scale)
@@ -114,7 +114,7 @@ public final class WorldScene implements Disposable {
      * model, so a placement blocks its tiles automatically rather than relying on the map author
      * having marked the same tiles by hand.
      */
-    private void applyCollision(MapProp prop, ModelDefinition definition) {
+    private void applyCollision(MapProp prop, ModelDefinition definition, float groundY) {
         int anchorX = MathUtils.floor(prop.x);
         int anchorZ = MathUtils.floor(prop.z);
         float radians = prop.rotation * MathUtils.degreesToRadians;
@@ -143,7 +143,12 @@ public final class WorldScene implements Disposable {
                     throw new IllegalStateException("Prop footprint leaves the map: " + definition.id
                         + " at " + mapX + "," + mapZ);
                 }
-                map.tiles.setBlocked(mapX, mapZ, true);
+                if (definition.walkable) {
+                    map.tiles.setWalkableSurface(mapX, mapZ,
+                        groundY + prop.elevation + definition.offsetY + definition.walkHeight);
+                } else {
+                    map.tiles.setBlocked(mapX, mapZ, true);
+                }
             }
         }
     }

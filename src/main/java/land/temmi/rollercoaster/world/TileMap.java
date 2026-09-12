@@ -13,6 +13,7 @@ public final class TileMap {
     private final int depth;
     private final TileSurface[] surfaces;
     private final float[] heights;
+    private final float[] walkableSurfaceHeights;
     private final TileShape[] shapes;
     private final boolean[] blocked;
 
@@ -22,6 +23,8 @@ public final class TileMap {
         this.depth = depth;
         surfaces = new TileSurface[Math.multiplyExact(width, depth)];
         heights = new float[surfaces.length];
+        walkableSurfaceHeights = new float[surfaces.length];
+        java.util.Arrays.fill(walkableSurfaceHeights, Float.NaN);
         shapes = new TileShape[surfaces.length];
         blocked = new boolean[surfaces.length];
         java.util.Arrays.fill(shapes, TileShape.FLAT);
@@ -45,6 +48,12 @@ public final class TileMap {
         this.blocked[index(x, z)] = blocked;
     }
 
+    /** Adds a raised walkable surface supplied by a prop, such as a bridge deck. */
+    public void setWalkableSurface(int x, int z, float height) {
+        if (!Float.isFinite(height)) throw new IllegalArgumentException("Walkable surface height must be finite");
+        walkableSurfaceHeights[index(x, z)] = height;
+    }
+
     public void setShape(int x, int z, TileShape shape) {
         if (shape == null) throw new IllegalArgumentException("Tile shape is required");
         shapes[index(x, z)] = shape;
@@ -59,9 +68,14 @@ public final class TileMap {
     public TileShape getShape(int x, int z) { return shapes[index(x, z)]; }
     public boolean isBlocked(int x, int z) { return blocked[index(x, z)]; }
 
+    public boolean hasWalkableSurface(int x, int z) { return !Float.isNaN(walkableSurfaceHeights[index(x, z)]); }
+
+    public float getWalkableSurfaceHeight(int x, int z) { return walkableSurfaceHeights[index(x, z)]; }
+
     /** Combines the map's collision layer with the tile type's own walkability. */
     public boolean isWalkable(int x, int z) {
         int index = index(x, z);
+        if (!Float.isNaN(walkableSurfaceHeights[index])) return true;
         if (blocked[index]) return false;
         TileSurface surface = surfaces[index];
         return surface == null || surface.isWalkable();

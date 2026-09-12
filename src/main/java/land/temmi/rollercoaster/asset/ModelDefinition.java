@@ -21,6 +21,10 @@ public final class ModelDefinition {
     public final int collisionMaxZ;
     /** Tilt the prop onto the terrain slope instead of keeping it upright. */
     public final boolean alignToSlope;
+    /** Whether the prop supplies a raised walkable surface over its collision footprint. */
+    public final boolean walkable;
+    /** Surface height above the prop anchor, used when {@link #walkable} is enabled. */
+    public final float walkHeight;
 
     public ModelDefinition(String id, String source, float offsetX, float offsetY, float offsetZ,
                            float scale, float height,
@@ -29,7 +33,7 @@ public final class ModelDefinition {
                            int collisionMinX, int collisionMaxX, int collisionMinZ, int collisionMaxZ) {
         this(id, source, offsetX, offsetY, offsetZ, scale, height,
             boundsMinX, boundsMinY, boundsMinZ, boundsMaxX, boundsMaxY, boundsMaxZ,
-            collisionMinX, collisionMaxX, collisionMinZ, collisionMaxZ, false);
+            collisionMinX, collisionMaxX, collisionMinZ, collisionMaxZ, false, false, 0f);
     }
 
     public ModelDefinition(String id, String source, float offsetX, float offsetY, float offsetZ,
@@ -38,6 +42,18 @@ public final class ModelDefinition {
                            float boundsMaxX, float boundsMaxY, float boundsMaxZ,
                            int collisionMinX, int collisionMaxX, int collisionMinZ, int collisionMaxZ,
                            boolean alignToSlope) {
+        this(id, source, offsetX, offsetY, offsetZ, scale, height,
+            boundsMinX, boundsMinY, boundsMinZ, boundsMaxX, boundsMaxY, boundsMaxZ,
+            collisionMinX, collisionMaxX, collisionMinZ, collisionMaxZ,
+            alignToSlope, false, 0f);
+    }
+
+    public ModelDefinition(String id, String source, float offsetX, float offsetY, float offsetZ,
+                           float scale, float height,
+                           float boundsMinX, float boundsMinY, float boundsMinZ,
+                           float boundsMaxX, float boundsMaxY, float boundsMaxZ,
+                           int collisionMinX, int collisionMaxX, int collisionMinZ, int collisionMaxZ,
+                           boolean alignToSlope, boolean walkable, float walkHeight) {
         if (id == null || id.length() == 0 || source == null || source.length() == 0) {
             throw new IllegalArgumentException("Model ID and source are required");
         }
@@ -46,6 +62,9 @@ public final class ModelDefinition {
         }
         if (scale <= 0f || height <= 0f || boundsMinX > boundsMaxX || boundsMinY > boundsMaxY || boundsMinZ > boundsMaxZ) {
             throw new IllegalArgumentException("Invalid model dimensions: " + id);
+        }
+        if (!Float.isFinite(walkHeight) || (walkable && walkHeight < 0f)) {
+            throw new IllegalArgumentException("Invalid walkable surface metadata: " + id);
         }
         this.id = id;
         this.source = source;
@@ -65,5 +84,7 @@ public final class ModelDefinition {
         this.collisionMinZ = collisionMinZ;
         this.collisionMaxZ = collisionMaxZ;
         this.alignToSlope = alignToSlope;
+        this.walkable = walkable;
+        this.walkHeight = walkHeight;
     }
 }
