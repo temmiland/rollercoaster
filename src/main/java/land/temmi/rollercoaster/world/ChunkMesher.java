@@ -32,7 +32,7 @@ public final class ChunkMesher {
                             if (tile == null) continue;
                             if (mesh == null) mesh = builder.part("chunk-" + x0 + "-" + z0,
                                 GL20.GL_TRIANGLES, ATTRIBUTES, material);
-                            placement.setToTranslation(x, map.getHeight(x, z), z);
+                            placement.setToTranslation(x - 1f, map.getHeight(x, z), z - 1f);
                             for (Node node : tile.model.nodes) append(mesh, node, placement, transform);
                         }
                     }

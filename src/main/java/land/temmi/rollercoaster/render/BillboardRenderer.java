@@ -15,7 +15,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import com.badlogic.gdx.utils.Pool;
 
-/** A reusable camera-facing quad with a pixel-art atlas region. */
+/** A reusable camera-facing quad anchored at its world-space foot point. */
 public final class BillboardRenderer implements RenderableProvider, Disposable {
     public static final Object TAG = new Object();
 

@@ -4,7 +4,7 @@ uniform mat4 u_projViewTrans;
 uniform mat4 u_worldTrans;
 uniform vec2 u_targetSize;
 uniform vec3 u_billboardRight;
-uniform vec3 u_billboardUp;
+uniform float u_heightScale;
 varying vec2 v_uv;
 
 void main() {
@@ -12,7 +12,7 @@ void main() {
     float width = length(u_worldTrans[0].xyz);
     float height = length(u_worldTrans[1].xyz);
     vec3 worldPosition = center + u_billboardRight * a_position.x * width
-        + u_billboardUp * a_position.y * height;
+        + vec3(0.0, (a_position.y + 0.5) * height * u_heightScale, 0.0);
     vec4 clip = u_projViewTrans * vec4(worldPosition, 1.0);
     vec2 pixels = (clip.xy / clip.w * 0.5 + 0.5) * u_targetSize;
     pixels = floor(pixels) + 0.5;

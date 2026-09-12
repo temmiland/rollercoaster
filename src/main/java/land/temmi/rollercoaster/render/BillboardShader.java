@@ -36,10 +36,9 @@ final class BillboardShader implements Shader {
         program.bind();
         program.setUniformMatrix("u_projViewTrans", camera.combined);
         program.setUniformf("u_targetSize", camera.viewportWidth, camera.viewportHeight);
-        program.setUniformf("u_billboardUp", camera.up.x, camera.up.y, camera.up.z);
-        program.setUniformf("u_billboardRight", camera.direction.y * camera.up.z - camera.direction.z * camera.up.y,
-            camera.direction.z * camera.up.x - camera.direction.x * camera.up.z,
-            camera.direction.x * camera.up.y - camera.direction.y * camera.up.x);
+        float rightLength = (float) Math.sqrt(camera.direction.x * camera.direction.x + camera.direction.z * camera.direction.z);
+        program.setUniformf("u_billboardRight", -camera.direction.z / rightLength, 0f, camera.direction.x / rightLength);
+        program.setUniformf("u_heightScale", 1f / Math.max(0.001f, camera.up.y));
         context.setDepthTest(GL20.GL_LEQUAL);
         context.setDepthMask(true);
         context.setCullFace(GL20.GL_NONE);

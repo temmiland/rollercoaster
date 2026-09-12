@@ -95,7 +95,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         pixelCamera.follow(subjectFootPosition, SUBJECT_WORLD_HEIGHT, SUBJECT_PIXEL_HEIGHT);
         pixelCamera.snapToPixelGrid(lowRes.getWidth(), lowRes.getHeight());
 
-        playerSprite.setPosition(subjectFootPosition.x, SUBJECT_WORLD_HEIGHT * 0.5f, subjectFootPosition.z);
+        playerSprite.setPosition(subjectFootPosition.x, 0f, subjectFootPosition.z);
 
         lowRes.begin();
         Gdx.gl.glClearColor(0.1f, 0.12f, 0.16f, 1f);
