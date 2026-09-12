@@ -32,7 +32,7 @@ public final class DirectionalShadowMap implements Disposable {
     private float worldSize = 32f;
     private float lightDistance = 64f;
     private float depthBias = 0.00035f;
-    private float strength = 1f;
+    private float strength = 0.65f;
     private boolean rendered;
 
     public DirectionalShadowMap(LightingEnvironment lighting) {

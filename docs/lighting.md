@@ -37,6 +37,8 @@ The depth pass packs depth in two colour channels, with dithering disabled, near
 texture filtering and depth writes enabled before clearing. A texel-aligned light camera,
 3x3 PCF and slope-dependent comparison bias reduce movement shimmer and self-shadowing.
 `setDepthBias` uses normalized depth; excessive values detach shadows from their casters.
+The default shadow strength is 0.65, leaving ambient and moonlight visible in shaded areas;
+use `setStrength` to tune it for a particular art style.
 Only the directional sun or moonlight is shadowed, so ambient and local lights still illuminate
 the shade.
 
