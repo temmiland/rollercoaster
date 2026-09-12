@@ -104,20 +104,26 @@ public class LowResTarget implements Disposable {
         intermediateRegion.flip(false, true);
     }
 
-    private void rebuildIntermediate(int targetW, int targetH) {
+    /** Largest whole-number upscale of the internal buffer that still fits the target area. */
+    private int integerScale(int targetW, int targetH) {
+        return Math.max(1, Math.min(targetW / internalWidth, targetH / internalHeight));
+    }
+
+    private void rebuildIntermediate(int width, int height) {
         if (intermediateFbo != null) {
             intermediateFbo.dispose();
         }
-
-        // Largest whole-number upscale that still fits the target area: this pass
-        // stays pixel-perfect. Only the leftover fractional remainder (see
-        // blitToScreen) gets blurred, instead of blurring the whole low-res image.
-        int intScale = Math.max(1, Math.min(targetW / internalWidth, targetH / internalHeight));
-        int width = internalWidth * intScale;
-        int height = internalHeight * intScale;
-
         intermediateFbo = new FrameBuffer(Pixmap.Format.RGB888, width, height, false);
         bindIntermediateTexture();
+    }
+
+    private void releaseIntermediate() {
+        if (intermediateFbo == null) return;
+        intermediateFbo.dispose();
+        intermediateFbo = null;
+        intermediateRegion.setTexture(null);
+        lastTargetW = -1;
+        lastTargetH = -1;
     }
 
     public void begin() {
@@ -148,8 +154,28 @@ public class LowResTarget implements Disposable {
             vpY = (screenH - targetH) / 2;
         }
 
+        int intScale = integerScale(targetW, targetH);
+        int interW = internalWidth * intScale;
+        int interH = internalHeight * intScale;
+
+        if (letterboxed) {
+            Gdx.gl.glViewport(0, 0, screenW, screenH);
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        }
+
+        if (interW == targetW && interH == targetH) {
+            // The integer upscale already fills the target exactly - the usual case on
+            // 720p/1080p/1440p/4K. A fractional pass would be an identity copy, so go
+            // straight to the back buffer and keep the intermediate buffer unallocated.
+            releaseIntermediate();
+            Gdx.gl.glViewport(vpX, vpY, targetW, targetH);
+            drawRegion(batch, sourceRegion, internalWidth, internalHeight);
+            return;
+        }
+
         if (intermediateFbo == null || targetW != lastTargetW || targetH != lastTargetH) {
-            rebuildIntermediate(targetW, targetH);
+            rebuildIntermediate(interW, interH);
             lastTargetW = targetW;
             lastTargetH = targetH;
         } else if (intermediateRegion.getTexture() != intermediateFbo.getColorBufferTexture()) {
@@ -158,24 +184,19 @@ public class LowResTarget implements Disposable {
 
         // Pass 1: nearest-neighbour integer upscale, still pixel-perfect.
         intermediateFbo.begin();
-        passProjection.setToOrtho2D(0, 0, internalWidth, internalHeight);
-        batch.setProjectionMatrix(passProjection);
-        batch.begin();
-        batch.draw(sourceRegion, 0, 0, internalWidth, internalHeight);
-        batch.end();
+        drawRegion(batch, sourceRegion, internalWidth, internalHeight);
         intermediateFbo.end();
 
         // Pass 2: small fractional stretch to fill the target area; only this step blurs.
-        if (letterboxed) {
-            Gdx.gl.glViewport(0, 0, screenW, screenH);
-            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
-            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        }
         Gdx.gl.glViewport(vpX, vpY, targetW, targetH);
-        passProjection.setToOrtho2D(0, 0, intermediateFbo.getWidth(), intermediateFbo.getHeight());
+        drawRegion(batch, intermediateRegion, interW, interH);
+    }
+
+    private void drawRegion(SpriteBatch batch, TextureRegion region, int width, int height) {
+        passProjection.setToOrtho2D(0, 0, width, height);
         batch.setProjectionMatrix(passProjection);
         batch.begin();
-        batch.draw(intermediateRegion, 0, 0, intermediateFbo.getWidth(), intermediateFbo.getHeight());
+        batch.draw(region, 0, 0, width, height);
         batch.end();
     }
 
