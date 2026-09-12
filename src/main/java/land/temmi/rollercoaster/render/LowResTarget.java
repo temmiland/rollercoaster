@@ -1,50 +1,59 @@
 package land.temmi.rollercoaster.render;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Disposable;
 
 public class LowResTarget implements Disposable {
 
-    private static final int TARGET_HEIGHT = 360;
-    private static final int FIXED_WIDTH = 640;
-    private static final int MIN_FLEX_WIDTH = 512;
-    private static final int MAX_FLEX_WIDTH = 768;
+    // Pinned to whichever screen axis is shorter, so pixel density stays
+    // consistent across landscape and portrait devices.
+    private static final int MINOR_AXIS_PX = 360;
 
-    private final ScalePolicy policy;
-    private final TextureRegion colorRegion = new TextureRegion();
-    private final Matrix4 blitProjection = new Matrix4();
+    private final TextureRegion sourceRegion = new TextureRegion();
+    private final TextureRegion intermediateRegion = new TextureRegion();
+    private final Matrix4 passProjection = new Matrix4();
 
-    private FrameBuffer fbo;
+    private FrameBuffer sourceFbo;
     private int internalWidth;
-    private final int internalHeight = TARGET_HEIGHT;
+    private int internalHeight;
 
-    public LowResTarget(ScalePolicy policy) {
-        this.policy = policy;
-    }
+    private FrameBuffer intermediateFbo;
+    private int lastScreenW = -1;
+    private int lastScreenH = -1;
 
     public void resize(int windowWidth, int windowHeight) {
-        int width = policy == ScalePolicy.FLEX_WIDTH
-            ? MathUtils.clamp(Math.round(TARGET_HEIGHT * (windowWidth / (float) windowHeight)), MIN_FLEX_WIDTH, MAX_FLEX_WIDTH)
-            : FIXED_WIDTH;
+        if (windowWidth <= 0 || windowHeight <= 0) {
+            return; // e.g. a minimized window
+        }
 
-        if (fbo == null || width != internalWidth) {
+        int width;
+        int height;
+        if (windowWidth >= windowHeight) {
+            height = MINOR_AXIS_PX;
+            width = Math.round(height * (windowWidth / (float) windowHeight));
+        } else {
+            width = MINOR_AXIS_PX;
+            height = Math.round(width * (windowHeight / (float) windowWidth));
+        }
+
+        if (sourceFbo == null || width != internalWidth || height != internalHeight) {
             internalWidth = width;
-            rebuild();
+            internalHeight = height;
+            rebuildSource();
+            lastScreenW = -1; // intScale depends on internalWidth/Height too; force an intermediate rebuild
         }
     }
 
-    private void rebuild() {
-        if (fbo != null) {
-            fbo.dispose();
+    private void rebuildSource() {
+        if (sourceFbo != null) {
+            sourceFbo.dispose();
         }
 
         FrameBuffer.FrameBufferBuilder builder = new FrameBuffer.FrameBufferBuilder(internalWidth, internalHeight);
@@ -55,55 +64,65 @@ public class LowResTarget implements Disposable {
         } else {
             builder.addBasicDepthRenderBuffer();
         }
-        fbo = builder.build();
+        sourceFbo = builder.build();
+        sourceFbo.getColorBufferTexture().setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
 
-        TextureFilter filter = policy == ScalePolicy.STRETCH_SHARP ? TextureFilter.Linear : TextureFilter.Nearest;
-        fbo.getColorBufferTexture().setFilter(filter, filter);
+        sourceRegion.setRegion(sourceFbo.getColorBufferTexture());
+        sourceRegion.flip(false, true); // FBO textures are V-flipped relative to the screen
+    }
 
-        colorRegion.setRegion(fbo.getColorBufferTexture());
-        colorRegion.flip(false, true); // FBO textures are V-flipped relative to the screen
+    private void rebuildIntermediate(int screenW, int screenH) {
+        if (intermediateFbo != null) {
+            intermediateFbo.dispose();
+        }
+
+        // Largest whole-number upscale that still fits the screen: this pass stays
+        // pixel-perfect. Only the leftover fractional remainder (see blitToScreen)
+        // gets blurred, instead of blurring the whole low-res image directly.
+        int intScale = Math.max(1, Math.min(screenW / internalWidth, screenH / internalHeight));
+        int width = internalWidth * intScale;
+        int height = internalHeight * intScale;
+
+        intermediateFbo = new FrameBuffer(Pixmap.Format.RGB888, width, height, false);
+        intermediateFbo.getColorBufferTexture().setFilter(TextureFilter.Linear, TextureFilter.Linear);
+
+        intermediateRegion.setRegion(intermediateFbo.getColorBufferTexture());
+        intermediateRegion.flip(false, true);
     }
 
     public void begin() {
-        fbo.begin();
+        sourceFbo.begin();
     }
 
     public void end() {
-        fbo.end();
+        sourceFbo.end();
     }
 
     public void blitToScreen(SpriteBatch batch) {
         int screenW = Gdx.graphics.getBackBufferWidth();
         int screenH = Gdx.graphics.getBackBufferHeight();
 
-        Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        int vpX;
-        int vpY;
-        int vpW;
-        int vpH;
-        if (policy == ScalePolicy.STRETCH_SHARP) {
-            vpX = 0;
-            vpY = 0;
-            vpW = screenW;
-            vpH = screenH;
-        } else {
-            int scale = Math.max(1, Math.min(screenW / internalWidth, screenH / internalHeight));
-            vpW = internalWidth * scale;
-            vpH = internalHeight * scale;
-            vpX = (screenW - vpW) / 2;
-            vpY = (screenH - vpH) / 2;
+        if (intermediateFbo == null || screenW != lastScreenW || screenH != lastScreenH) {
+            rebuildIntermediate(screenW, screenH);
+            lastScreenW = screenW;
+            lastScreenH = screenH;
         }
 
-        // fbo.end() already reset the viewport to the full backbuffer; the letterboxed
-        // viewport for the blit has to be set by hand.
-        Gdx.gl.glViewport(vpX, vpY, vpW, vpH);
-
-        blitProjection.setToOrtho2D(0, 0, internalWidth, internalHeight);
-        batch.setProjectionMatrix(blitProjection);
+        // Pass 1: nearest-neighbour integer upscale, still pixel-perfect.
+        intermediateFbo.begin();
+        passProjection.setToOrtho2D(0, 0, internalWidth, internalHeight);
+        batch.setProjectionMatrix(passProjection);
         batch.begin();
-        batch.draw(colorRegion, 0, 0, internalWidth, internalHeight);
+        batch.draw(sourceRegion, 0, 0, internalWidth, internalHeight);
+        batch.end();
+        intermediateFbo.end();
+
+        // Pass 2: small fractional stretch to fill the screen exactly; only this step blurs.
+        Gdx.gl.glViewport(0, 0, screenW, screenH);
+        passProjection.setToOrtho2D(0, 0, intermediateFbo.getWidth(), intermediateFbo.getHeight());
+        batch.setProjectionMatrix(passProjection);
+        batch.begin();
+        batch.draw(intermediateRegion, 0, 0, intermediateFbo.getWidth(), intermediateFbo.getHeight());
         batch.end();
     }
 
@@ -117,8 +136,11 @@ public class LowResTarget implements Disposable {
 
     @Override
     public void dispose() {
-        if (fbo != null) {
-            fbo.dispose();
+        if (sourceFbo != null) {
+            sourceFbo.dispose();
+        }
+        if (intermediateFbo != null) {
+            intermediateFbo.dispose();
         }
     }
 }

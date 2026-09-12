@@ -8,7 +8,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import land.temmi.rollercoaster.render.LowResTarget;
-import land.temmi.rollercoaster.render.ScalePolicy;
 
 public class RollercoasterGame extends ApplicationAdapter {
 
@@ -21,7 +20,7 @@ public class RollercoasterGame extends ApplicationAdapter {
 
     @Override
     public void create() {
-        lowRes = new LowResTarget(ScalePolicy.FLEX_WIDTH);
+        lowRes = new LowResTarget();
         lowRes.resize(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         blitBatch = new SpriteBatch();
         shapes = new ShapeRenderer();
