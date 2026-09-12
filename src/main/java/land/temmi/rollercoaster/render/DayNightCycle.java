@@ -1,36 +1,33 @@
 package land.temmi.rollercoaster.render;
 
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector3;
-
-/** Advances a configurable 24-hour clock and updates a shared lighting environment. */
+/** Advances a configurable 24-hour clock and applies fixed lighting presets on map entry. */
 public final class DayNightCycle {
     private final LightingEnvironment environment;
-    private final Vector3 sunDirection = new Vector3();
-    private final Color ambient = new Color();
-    private final Color sun = new Color();
     private float timeOfDay = 12f;
     private float secondsPerDay = 600f;
     private boolean paused;
+    private LightingSituation situation;
+    private LightingSituation pendingSituation;
 
     public DayNightCycle(LightingEnvironment environment) {
         if (environment == null) throw new IllegalArgumentException("Lighting environment is required");
         this.environment = environment;
-        apply();
+        situation = LightingSituation.forTime(timeOfDay);
+        pendingSituation = situation;
+        situation.applyTo(environment);
     }
 
     public void update(float deltaSeconds) {
         if (!paused && deltaSeconds > 0f) {
             timeOfDay = (timeOfDay + deltaSeconds * 24f / secondsPerDay) % 24f;
-            apply();
+            pendingSituation = LightingSituation.forTime(timeOfDay);
         }
     }
 
     public DayNightCycle setTimeOfDay(float hours) {
         if (hours < 0f || hours >= 24f) throw new IllegalArgumentException("Time must be in [0, 24)");
         timeOfDay = hours;
-        apply();
+        pendingSituation = LightingSituation.forTime(hours);
         return this;
     }
 
@@ -45,22 +42,23 @@ public final class DayNightCycle {
         return this;
     }
 
+    /** Applies the clock-selected preset after a map has been loaded. */
+    public DayNightCycle enterMap() {
+        situation = pendingSituation;
+        situation.applyTo(environment);
+        return this;
+    }
+
+    /** Cycles presets immediately, useful for previews and debug controls. */
+    public DayNightCycle cycleSituation() {
+        situation = situation.next();
+        situation.applyTo(environment);
+        return this;
+    }
+
     public float getTimeOfDay() { return timeOfDay; }
     public float getSecondsPerDay() { return secondsPerDay; }
     public boolean isPaused() { return paused; }
-
-    private void apply() {
-        float solarAngle = (timeOfDay - 6f) * MathUtils.PI / 12f;
-        float elevation = MathUtils.sin(solarAngle);
-        float daylight = MathUtils.clamp((elevation + 0.12f) / 0.30f, 0f, 1f);
-        daylight = daylight * daylight * (3f - 2f * daylight);
-        float azimuth = (timeOfDay / 24f) * MathUtils.PI2;
-        float horizontal = MathUtils.cos(elevation);
-        sunDirection.set(MathUtils.cos(azimuth) * horizontal, Math.max(0.05f, elevation),
-            MathUtils.sin(azimuth) * horizontal).nor();
-        ambient.set(0.40f + 0.60f * daylight, 0.48f + 0.48f * daylight, 0.70f + 0.20f * daylight, 1f);
-        sun.set(1f, 0.72f + 0.25f * daylight, 0.48f + 0.45f * daylight, 1f);
-        environment.setAmbient(ambient, 0.45f - 0.11f * daylight);
-        environment.setSun(sunDirection, sun, 0.95f * daylight);
-    }
+    public LightingSituation getSituation() { return situation; }
+    public LightingSituation getPendingSituation() { return pendingSituation; }
 }
