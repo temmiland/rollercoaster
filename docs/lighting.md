@@ -8,6 +8,8 @@ muted. Night combines brighter cool ambient light with weak directional moonligh
 remains readable without recreating daytime brightness.
 `DayNightCycle` advances the game clock and keeps the next preset pending until
 `enterMap()` applies it. This avoids continuous lighting changes while the player is in a map.
+All presets share one nearly overhead directional vector, keeping shadows short and consistent
+while their colour and intensity change.
 
 ## Sun shadows
 
