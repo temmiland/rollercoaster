@@ -24,14 +24,26 @@ public final class MapLoader {
         JsonValue tileLayer = required(layers, "tile");
         JsonValue heightLayer = layers.get("height");
         JsonValue collisionLayer = layers.get("collision");
+        // JsonValue is a linked list, so rows and cells are walked instead of indexed -
+        // get(int) would make loading quadratic in the map size.
+        JsonValue tileRow = tileLayer.child;
+        JsonValue heightRow = heightLayer == null ? null : heightLayer.child;
+        JsonValue collisionRow = collisionLayer == null ? null : collisionLayer.child;
         for (int z = 0; z < depth; z++) {
-            JsonValue tileRow = row(tileLayer, z, width, "tile");
+            JsonValue tileCell = cells(tileRow, z, width, "tile");
+            JsonValue heightCell = heightRow == null ? null : cells(heightRow, z, width, "height");
+            JsonValue collisionCell = collisionRow == null ? null : cells(collisionRow, z, width, "collision");
             for (int x = 0; x < width; x++) {
-                String tileName = tileRow.getString(x);
-                float height = heightLayer == null ? 0f : row(heightLayer, z, width, "height").getFloat(x);
-                boolean blocked = collisionLayer != null && row(collisionLayer, z, width, "collision").getInt(x) != 0;
-                map.set(x, z, tileset.get(tileName), height, blocked);
+                map.set(x, z, tileset.get(tileCell.asString()),
+                    heightCell == null ? 0f : heightCell.asFloat(),
+                    collisionCell != null && collisionCell.asInt() != 0);
+                tileCell = tileCell.next;
+                if (heightCell != null) heightCell = heightCell.next;
+                if (collisionCell != null) collisionCell = collisionCell.next;
             }
+            tileRow = tileRow.next;
+            if (heightRow != null) heightRow = heightRow.next;
+            if (collisionRow != null) collisionRow = collisionRow.next;
         }
         Array<MapProp> props = new Array<>();
         JsonValue propArray = root.get("props");
@@ -60,11 +72,10 @@ public final class MapLoader {
         return value.asString();
     }
 
-    /** A layer row holds one cell per column, so {@code columns} is the map width. */
-    private static JsonValue row(JsonValue layer, int index, int columns, String name) {
-        JsonValue value = layer.get(index);
-        if (value == null || !value.isArray() || value.size < columns) throw error(name + " layer has invalid row " + index);
-        return value;
+    /** Validates a layer row and returns its first cell. A row holds one cell per column. */
+    private static JsonValue cells(JsonValue row, int index, int columns, String name) {
+        if (row == null || !row.isArray() || row.size < columns) throw error(name + " layer has invalid row " + index);
+        return row.child;
     }
 
     private static IllegalArgumentException error(String message) { return new IllegalArgumentException("Invalid map: " + message); }
