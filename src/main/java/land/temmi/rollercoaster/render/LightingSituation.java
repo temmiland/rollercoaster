@@ -5,18 +5,18 @@ import com.badlogic.gdx.math.Vector3;
 
 /** A fixed lighting preset selected by the in-game clock. */
 public enum LightingSituation {
-    EARLY_MORNING("early morning", 5f, 0.65f,
+    EARLY_MORNING("early morning", 5f, 0.35f,
         new Color(0.70f, 0.76f, 0.95f, 1f), 0.36f,
-        new Vector3(-0.55f, 0.65f, 0.35f), new Color(1f, 0.68f, 0.45f, 1f), 0.48f),
+        new Vector3(-0.55f, 0.65f, 0.35f), new Color(1f, 0.68f, 0.45f, 1f), 0.40f),
     DAY("day", 8f, 0f,
         new Color(0.82f, 0.90f, 1f, 1f), 0.34f,
         new Vector3(-0.45f, 0.90f, 0.20f), new Color(1f, 0.95f, 0.85f, 1f), 0.95f),
-    EARLY_EVENING("early evening", 17f, 0.75f,
+    EARLY_EVENING("early evening", 17f, 0.40f,
         new Color(0.60f, 0.52f, 0.70f, 1f), 0.36f,
-        new Vector3(0.55f, 0.55f, -0.35f), new Color(1f, 0.55f, 0.30f, 1f), 0.45f),
-    NIGHT("night", 20f, 1f,
-        new Color(0.22f, 0.30f, 0.50f, 1f), 0.40f,
-        new Vector3(0f, 0.8f, 0f), new Color(0.30f, 0.40f, 0.65f, 1f), 0f);
+        new Vector3(0.55f, 0.55f, -0.35f), new Color(1f, 0.55f, 0.30f, 1f), 0.38f),
+    NIGHT("night", 20f, 0.45f,
+        new Color(0.30f, 0.38f, 0.58f, 1f), 0.48f,
+        new Vector3(-0.25f, 0.85f, 0.35f), new Color(0.38f, 0.48f, 0.75f, 1f), 0.20f);
 
     private final String displayName;
     private final float startHour;
