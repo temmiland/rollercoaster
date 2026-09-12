@@ -55,7 +55,9 @@ public final class WorldScene implements Disposable {
 
     private void addInstance(ModelInstance instance) {
         instances.add(instance);
-        bounds.add(instance.calculateBoundingBox(new BoundingBox()));
+        // calculateBoundingBox only walks node transforms; the instance transform that
+        // carries a prop's world placement has to be applied on top of it.
+        bounds.add(instance.calculateBoundingBox(new BoundingBox()).mul(instance.transform));
     }
 
     private void addProp(MapProp prop) {
