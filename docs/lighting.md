@@ -1,8 +1,10 @@
 # Lighting and shadows
 
 `LightingEnvironment` shares ambient, directional sun and up to eight point/spot lights
-between the geometry and billboard shaders. `DayNightCycle` updates sun and ambient
-colours/intensities on a 24-hour clock. Night ambient remains bright enough to navigate.
+between the geometry and billboard shaders. `LightingSituation` defines four fixed presets:
+early morning (05:00), day (08:00), early evening (17:00), and night (20:00 until 05:00).
+`DayNightCycle` advances the game clock and keeps the next preset pending until
+`enterMap()` applies it. This avoids continuous lighting changes while the player is in a map.
 
 ## Sun shadows
 
@@ -48,7 +50,8 @@ Local lights use a smooth finite-range falloff and spot cone attenuation. Tune p
 range and intensity together. Keep lamps outside solid geometry. The example puts warm
 point lights at street fixtures and outward/downward spot lights at the house windows.
 Its `ExampleLighting` switches all local sources and emissive materials off during the
-day, fades them in at dusk and preserves the manual L override across time changes.
+day, uses fixed intensities in the other presets, and preserves the manual L override across
+time changes. A game can call `cycleSituation()` for a preview or debug control.
 
 ## Verification
 
