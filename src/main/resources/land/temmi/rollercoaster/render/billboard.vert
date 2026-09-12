@@ -21,7 +21,7 @@ void main() {
     vec3 worldPosition = center + u_billboardRight * a_position.x * width
         + vec3(0.0, (a_position.y + 0.5) * height * u_heightScale, 0.0);
     v_worldPosition = worldPosition;
-    v_normal = normalize(cross(vec3(0.0, 1.0, 0.0), u_billboardRight));
+    v_normal = normalize(cross(u_billboardRight, vec3(0.0, 1.0, 0.0)));
 #ifdef directionalShadow
     v_shadowPosition = u_shadowMatrix * vec4(worldPosition, 1.0);
 #endif
