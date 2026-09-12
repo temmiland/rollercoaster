@@ -47,6 +47,13 @@ float shadowVisibility() {
 }
 #endif
 
+float billboardFacing(vec3 lightDirection, vec3 normal) {
+    vec3 direction = normalize(lightDirection);
+    float front = smoothstep(0.0, 0.35, dot(normal, direction));
+    float overhead = smoothstep(0.55, 1.0, max(direction.y, 0.0)) * 0.85;
+    return max(front, overhead);
+}
+
 vec3 lightFactor() {
     vec3 normal = normalize(v_normal);
     vec3 result = u_ambientLight.rgb * u_ambientLight.a;
@@ -54,7 +61,7 @@ vec3 lightFactor() {
 #ifdef directionalShadow
     sunVisibility = shadowVisibility();
 #endif
-    float sunFacing = smoothstep(0.0, 0.35, dot(normal, normalize(u_sunDirection)));
+    float sunFacing = billboardFacing(u_sunDirection, normal);
     result += u_sunLight.rgb * u_sunLight.a * sunVisibility * sunFacing;
     for (int i = 0; i < 8; i++) {
         if (i >= u_pointCount) break;
@@ -67,8 +74,7 @@ vec3 lightFactor() {
             float angle = dot(-toLight / max(distanceToLight, 0.0001), normalize(u_pointDirection[i]));
             cone = smoothstep(u_pointParams[i].w, u_pointParams[i].z, angle);
         }
-        float facing = smoothstep(0.0, 0.35,
-            dot(normal, toLight / max(distanceToLight, 0.0001)));
+        float facing = billboardFacing(toLight / max(distanceToLight, 0.0001), normal);
         result += u_pointLight[i].rgb * u_pointLight[i].a * attenuation
             * cone * facing;
     }
