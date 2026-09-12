@@ -17,6 +17,7 @@ public final class WorldScene implements Disposable {
     private final Array<Model> chunks;
     private final ModelCatalog modelCatalog;
     private final Array<ModelInstance> instances = new Array<>();
+    private final Array<BoundingBox> bounds = new Array<>();
 
     public WorldScene(LoadedMap map, Array<Model> chunks, ModelCatalog modelCatalog) {
         if (map == null || chunks == null || modelCatalog == null) {
@@ -26,7 +27,7 @@ public final class WorldScene implements Disposable {
         this.chunks = chunks;
         this.modelCatalog = modelCatalog;
         try {
-            for (Model chunk : chunks) instances.add(new ModelInstance(chunk));
+            for (Model chunk : chunks) addInstance(new ModelInstance(chunk));
             for (MapProp prop : map.props) addProp(prop);
         } catch (RuntimeException failure) {
             dispose();
@@ -41,16 +42,20 @@ public final class WorldScene implements Disposable {
     public Array<ModelInstance> getVisibleInstances(Camera camera, Array<ModelInstance> visible) {
         if (camera == null || visible == null) throw new IllegalArgumentException("Camera and output are required");
         visible.clear();
-        BoundingBox bounds = new BoundingBox();
         Vector3 center = new Vector3();
         Vector3 dimensions = new Vector3();
-        for (ModelInstance instance : instances) {
-            instance.calculateBoundingBox(bounds);
-            bounds.getCenter(center);
-            bounds.getDimensions(dimensions);
-            if (camera.frustum.boundsInFrustum(center, dimensions)) visible.add(instance);
+        for (int i = 0; i < instances.size; i++) {
+            BoundingBox instanceBounds = bounds.get(i);
+            instanceBounds.getCenter(center);
+            instanceBounds.getDimensions(dimensions);
+            if (camera.frustum.boundsInFrustum(center, dimensions)) visible.add(instances.get(i));
         }
         return visible;
+    }
+
+    private void addInstance(ModelInstance instance) {
+        instances.add(instance);
+        bounds.add(instance.calculateBoundingBox(new BoundingBox()));
     }
 
     private void addProp(MapProp prop) {
@@ -67,7 +72,7 @@ public final class WorldScene implements Disposable {
             prop.z + offsetZ)
             .scale(definition.scale, definition.scale, definition.scale)
             .rotate(Vector3.Y, prop.rotation);
-        instances.add(instance);
+        addInstance(instance);
     }
 
     private void validateCollision(MapProp prop, ModelDefinition definition) {
@@ -89,5 +94,6 @@ public final class WorldScene implements Disposable {
         for (Model chunk : chunks) chunk.dispose();
         modelCatalog.dispose();
         instances.clear();
+        bounds.clear();
     }
 }
