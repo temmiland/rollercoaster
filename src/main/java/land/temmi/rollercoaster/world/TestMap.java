@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Matrix4;
 
 /** Procedural render fixture with four chunks, a path, a plateau and a house. */
 public final class TestMap {
+    private static LoadedMap loadedMap;
     private static TileMap loadedTiles;
     private TestMap() { }
 
@@ -38,6 +39,7 @@ public final class TestMap {
             LoadedMap loaded = new MapLoader().load(
                 Gdx.files.classpath("maps/testfield.json"), tileset);
             TileMap map = loaded.tiles;
+            loadedMap = loaded;
             loadedTiles = map;
             return new ChunkMesher().build(map, new Material());
         } finally {
@@ -47,6 +49,11 @@ public final class TestMap {
 
     public static boolean isBlocked(int x, int z) {
         return loadedTiles != null && loadedTiles.isBlocked(x, z);
+    }
+
+    public static LoadedMap getLoadedMap() {
+        if (loadedMap == null) throw new IllegalStateException("Test map has not been created");
+        return loadedMap;
     }
 
     private static TilePrototype ground(Color color, float thickness) {

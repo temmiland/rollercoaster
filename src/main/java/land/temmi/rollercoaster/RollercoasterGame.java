@@ -19,6 +19,8 @@ import land.temmi.rollercoaster.render.PixelCamera;
 import land.temmi.rollercoaster.render.WorldShaderProvider;
 import land.temmi.rollercoaster.render.BillboardRenderer;
 import land.temmi.rollercoaster.world.TestMap;
+import land.temmi.rollercoaster.world.LoadedMap;
+import land.temmi.rollercoaster.world.MapEntity;
 import land.temmi.rollercoaster.actor.GridActor;
 import land.temmi.rollercoaster.actor.SpriteAnimation;
 import land.temmi.rollercoaster.input.InputSource;
@@ -60,6 +62,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         modelBatch = new ModelBatch(new WorldShaderProvider());
         chunks = TestMap.create();
         for (Model chunk : chunks) world.add(new ModelInstance(chunk));
+        LoadedMap map = TestMap.getLoadedMap();
 
         Pixmap sprite = new Pixmap(32, 24, Pixmap.Format.RGBA8888);
         paintSprite(sprite, 0, false);
@@ -72,8 +75,9 @@ public class RollercoasterGame extends ApplicationAdapter {
         playerSprite = new BillboardRenderer(spriteTexture, frameA, SUBJECT_WORLD_HEIGHT);
         playerSprite.setBottomPadding(3f / 24f);
         playerAnimation = new SpriteAnimation(0.14f, frameA, frameB);
-        player = new GridActor(24, 24, 5f);
-        player.setTile(12, 14);
+        player = new GridActor(map.tiles.getWidth(), map.tiles.getDepth(), 5f);
+        MapEntity playerEntity = findPlayer(map);
+        player.setTile(playerEntity.x, playerEntity.z);
         player.setTileAccess((x, z) -> !TestMap.isBlocked(x, z));
         input = new KeyboardInput();
     }
@@ -123,6 +127,13 @@ public class RollercoasterGame extends ApplicationAdapter {
         sprite.setColor(0.15f, 0.20f, 0.32f, 1f);
         sprite.fillRectangle(offsetX + (alternate ? 3 : 4), 3, 3, 5);
         sprite.fillRectangle(offsetX + (alternate ? 10 : 9), 3, 3, 5);
+    }
+
+    private static MapEntity findPlayer(LoadedMap map) {
+        for (MapEntity entity : map.entities) {
+            if ("player".equals(entity.type)) return entity;
+        }
+        throw new IllegalArgumentException("Map has no player entity");
     }
 
     // Horizontal ticks every 10px (brighter every 50px), so a screenshot's rendered
