@@ -24,14 +24,6 @@ public final class ModelCatalog {
 
     private final ObjectMap<String, Entry> entries = new ObjectMap<>();
 
-    public ModelCatalog register(String id, Factory factory) {
-        return register(new ModelDefinition(id, "procedural", 0f, 0f, 0f, 0, 0, 0, 0), factory);
-    }
-
-    public ModelCatalog register(String id, Factory factory, float offsetX, float offsetY, float offsetZ) {
-        return register(new ModelDefinition(id, "procedural", offsetX, offsetY, offsetZ, 0, 0, 0, 0), factory);
-    }
-
     public ModelCatalog register(ModelDefinition definition, Factory factory) {
         if (definition == null || factory == null) throw new IllegalArgumentException("Model definition and factory are required");
         String id = definition.id;

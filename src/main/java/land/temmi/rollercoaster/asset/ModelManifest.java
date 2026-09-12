@@ -19,11 +19,19 @@ public final class ModelManifest {
             String id = requiredString(model, "id");
             String source = requiredString(model, "source");
             JsonValue anchor = requiredArray(model, "anchor", 3);
+            float scale = model.getFloat("scale");
+            float height = model.getFloat("height");
+            JsonValue bounds = required(model, "bounds");
+            JsonValue boundsMin = requiredArray(bounds, "min", 3);
+            JsonValue boundsMax = requiredArray(bounds, "max", 3);
             JsonValue collision = required(model, "collision");
             JsonValue min = requiredArray(collision, "min", 2);
             JsonValue max = requiredArray(collision, "max", 2);
             definitions.add(new ModelDefinition(id, source,
                 anchor.getFloat(0), anchor.getFloat(1), anchor.getFloat(2),
+                scale, height,
+                boundsMin.getFloat(0), boundsMin.getFloat(1), boundsMin.getFloat(2),
+                boundsMax.getFloat(0), boundsMax.getFloat(1), boundsMax.getFloat(2),
                 min.getInt(0), max.getInt(0), min.getInt(1), max.getInt(1)));
         }
         return definitions;

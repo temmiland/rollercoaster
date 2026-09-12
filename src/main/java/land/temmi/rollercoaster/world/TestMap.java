@@ -78,7 +78,7 @@ public final class TestMap {
             modelCatalog = new ModelCatalog();
             for (ModelDefinition definition : ModelManifest.load(Gdx.files.classpath("maps/models.json"))) {
                 if (definition.source.startsWith("gltf:") || definition.source.startsWith("glb:")) {
-                    modelCatalog.register(definition, new GltfModelFactory(definition.source.substring(5)));
+                    modelCatalog.register(definition, new GltfModelFactory(definition));
                 } else {
                     throw new IllegalArgumentException("Unknown model source: " + definition.source);
                 }
