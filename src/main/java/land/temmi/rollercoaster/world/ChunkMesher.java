@@ -4,40 +4,44 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
-import com.badlogic.gdx.graphics.g3d.model.Node;
-import com.badlogic.gdx.graphics.g3d.model.NodePart;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Matrix4;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 
+/**
+ * Bakes terrain geometry from the map itself rather than copying per-tile prototype meshes.
+ *
+ * <p>Each tile contributes a top face through its four corner heights, so a ramp is a sloped quad
+ * that meets its neighbours exactly. Side faces are emitted only where a neighbour's shared edge
+ * sits lower, which produces cliff faces where they belong and no geometry at all between two
+ * tiles of equal height — the interior walls that used to z-fight against the surface above them.
+ */
 public final class ChunkMesher {
     public static final int CHUNK_SIZE = 16;
     /**
-     * Packed colour keeps a tile vertex small; the shader still reads a vec4. Normals are part of
-     * the default set because the world shader falls back to a constant up vector without them,
-     * which would light ramps and cliff faces as if they were flat ground.
+     * Normals are part of the set because the world shader falls back to a constant up vector
+     * without them, which would light ramps and cliff faces as if they were flat ground.
      */
     public static final long ATTRIBUTES =
         Usage.Position | Usage.Normal | Usage.ColorPacked | Usage.TextureCoordinates;
 
-    private final long attributes;
+    private static final int[][] EDGES = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
-    public ChunkMesher() {
-        this(ATTRIBUTES);
-    }
+    private final Vector3 normal = new Vector3();
+    private float borderDepth = 0.35f;
 
-    /** Tilesets that only use the atlas can drop {@code ColorPacked}, texture-less ones the UVs. */
-    public ChunkMesher(long attributes) {
-        if ((attributes & Usage.Position) == 0) throw new IllegalArgumentException("Chunk vertices need positions");
-        this.attributes = attributes;
+    /** How far the skirt drops at the map border, where there is no neighbour to meet. */
+    public ChunkMesher setBorderDepth(float borderDepth) {
+        if (borderDepth < 0f) throw new IllegalArgumentException("Border depth must not be negative");
+        this.borderDepth = borderDepth;
+        return this;
     }
 
     /** One mesh/material per nonempty chunk. Caller owns the returned models and the material's textures. */
     public Array<Model> build(TileMap map, Material material) {
+        if (map == null || material == null) throw new IllegalArgumentException("Map and material are required");
         Array<Model> chunks = new Array<>();
-        Matrix4 placement = new Matrix4();
-        Matrix4 transform = new Matrix4();
         try {
             for (int z0 = 0; z0 < map.getDepth(); z0 += CHUNK_SIZE) {
                 for (int x0 = 0; x0 < map.getWidth(); x0 += CHUNK_SIZE) {
@@ -46,12 +50,10 @@ public final class ChunkMesher {
                     MeshPartBuilder mesh = null;
                     for (int z = z0; z < Math.min(z0 + CHUNK_SIZE, map.getDepth()); z++) {
                         for (int x = x0; x < Math.min(x0 + CHUNK_SIZE, map.getWidth()); x++) {
-                            TilePrototype tile = map.getTile(x, z);
-                            if (tile == null) continue;
+                            if (map.getSurface(x, z) == null) continue;
                             if (mesh == null) mesh = builder.part("chunk-" + x0 + "-" + z0,
-                                GL20.GL_TRIANGLES, attributes, material);
-                            placement.setToTranslation(x - 1f, map.getHeight(x, z), z - 1f);
-                            for (Node node : tile.model.nodes) append(mesh, node, placement, transform);
+                                GL20.GL_TRIANGLES, ATTRIBUTES, material);
+                            appendTile(mesh, map, x, z);
                         }
                     }
                     Model chunk = builder.end();
@@ -66,12 +68,72 @@ public final class ChunkMesher {
         }
     }
 
-    private void append(MeshPartBuilder mesh, Node node, Matrix4 placement, Matrix4 transform) {
-        transform.set(placement).mul(node.globalTransform);
-        mesh.setVertexTransform(transform);
-        for (NodePart part : node.parts) {
-            if (part.enabled) mesh.addMesh(part.meshPart);
+    private void appendTile(MeshPartBuilder mesh, TileMap map, int x, int z) {
+        TileSurface surface = map.getSurface(x, z);
+        float minX = x - 1f;
+        float maxX = x;
+        float minZ = z - 1f;
+        float maxZ = z;
+
+        float h00 = map.cornerHeight(x, z, 0, 0);
+        float h10 = map.cornerHeight(x, z, 1, 0);
+        float h11 = map.cornerHeight(x, z, 1, 1);
+        float h01 = map.cornerHeight(x, z, 0, 1);
+
+        map.getShape(x, z).normal(normal);
+        mesh.setColor(surface.topColor);
+        mesh.setUVRange(surface.topU(), surface.topV(), surface.topU2(), surface.topV2());
+        // Counter-clockwise seen from above: (minX,maxZ) (maxX,maxZ) (maxX,minZ) (minX,minZ).
+        mesh.rect(minX, h01, maxZ, maxX, h11, maxZ, maxX, h10, minZ, minX, h00, minZ,
+            normal.x, normal.y, normal.z);
+
+        mesh.setColor(surface.sideColor);
+        mesh.setUVRange(surface.sideU(), surface.sideV(), surface.sideU2(), surface.sideV2());
+        for (int[] edge : EDGES) appendSide(mesh, map, x, z, edge[0], edge[1]);
+    }
+
+    private void appendSide(MeshPartBuilder mesh, TileMap map, int x, int z, int dx, int dz) {
+        // The two corners of this tile that lie on the shared edge, and the neighbour's corners
+        // facing them. Equal heights mean the tiles meet flush and no wall is needed.
+        int aX, aZ, bX, bZ;
+        if (dz != 0) {
+            int corner = dz < 0 ? 0 : 1;
+            aX = 0; aZ = corner; bX = 1; bZ = corner;
+        } else {
+            int corner = dx < 0 ? 0 : 1;
+            aX = corner; aZ = 0; bX = corner; bZ = 1;
         }
-        for (Node child : node.getChildren()) append(mesh, child, placement, transform);
+        float topA = map.cornerHeight(x, z, aX, aZ);
+        float topB = map.cornerHeight(x, z, bX, bZ);
+
+        float bottomA;
+        float bottomB;
+        int nx = x + dx;
+        int nz = z + dz;
+        if (map.contains(nx, nz) && map.getSurface(nx, nz) != null) {
+            bottomA = map.cornerHeight(nx, nz, dz != 0 ? aX : 1 - aX, dz != 0 ? 1 - aZ : aZ);
+            bottomB = map.cornerHeight(nx, nz, dz != 0 ? bX : 1 - bX, dz != 0 ? 1 - bZ : bZ);
+        } else {
+            bottomA = topA - borderDepth;
+            bottomB = topB - borderDepth;
+        }
+        bottomA = Math.min(bottomA, topA);
+        bottomB = Math.min(bottomB, topB);
+        if (topA - bottomA <= 0f && topB - bottomB <= 0f) return;
+
+        float minX = x - 1f;
+        float maxX = x;
+        float minZ = z - 1f;
+        float maxZ = z;
+        if (dz < 0) {
+            // Facing -Z: x runs from max to min so the face winds outward.
+            mesh.rect(maxX, bottomB, minZ, minX, bottomA, minZ, minX, topA, minZ, maxX, topB, minZ, 0f, 0f, -1f);
+        } else if (dz > 0) {
+            mesh.rect(minX, bottomA, maxZ, maxX, bottomB, maxZ, maxX, topB, maxZ, minX, topA, maxZ, 0f, 0f, 1f);
+        } else if (dx < 0) {
+            mesh.rect(minX, bottomA, minZ, minX, bottomB, maxZ, minX, topB, maxZ, minX, topA, minZ, -1f, 0f, 0f);
+        } else {
+            mesh.rect(maxX, bottomB, maxZ, maxX, bottomA, minZ, maxX, topA, minZ, maxX, topB, maxZ, 1f, 0f, 0f);
+        }
     }
 }

@@ -43,8 +43,12 @@ public final class TilesetManifest {
         for (JsonValue tile = tileArray.child; tile != null; tile = tile.next) {
             String tileId = requiredString(tile, "id");
             JsonValue region = requiredArray(tile, "region", 4);
+            JsonValue side = tile.get("side");
+            if (side != null && (!side.isArray() || side.size < 4)) throw error("side must contain 4 values");
+            if (side == null) side = region;
             TileDefinition definition = new TileDefinition(tileId, region.getInt(0), region.getInt(1),
-                region.getInt(2), region.getInt(3));
+                region.getInt(2), region.getInt(3), side.getInt(0), side.getInt(1),
+                side.getInt(2), side.getInt(3), tile.getBoolean("walkable", true));
             for (TileDefinition existing : tiles) {
                 if (existing.id.equals(definition.id)) throw error("Duplicate tile ID: " + definition.id);
             }

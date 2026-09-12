@@ -44,4 +44,27 @@ public enum TileShape {
     public float edgeOffset(int dx, int dz) {
         return surfaceOffset(0.5f + dx * 0.5f, 0.5f + dz * 0.5f);
     }
+
+    /** Height at a tile corner, relative to the stored height. Corner units are 0 or 1. */
+    public float cornerOffset(int cornerX, int cornerZ) {
+        return surfaceOffset(cornerX, cornerZ);
+    }
+
+    /** Outward surface normal, pointing up and down the slope. */
+    public void normal(com.badlogic.gdx.math.Vector3 out) {
+        out.set(-slopeX, 1f, -slopeZ).nor();
+    }
+
+    /** Parses the name used in map documents; {@code null} and empty mean {@link #FLAT}. */
+    public static TileShape parse(String name) {
+        if (name == null || name.length() == 0) return FLAT;
+        for (TileShape shape : values()) {
+            if (shape.name().equalsIgnoreCase(name)) return shape;
+        }
+        if ("ramp_n".equalsIgnoreCase(name)) return RAMP_NORTH;
+        if ("ramp_e".equalsIgnoreCase(name)) return RAMP_EAST;
+        if ("ramp_s".equalsIgnoreCase(name)) return RAMP_SOUTH;
+        if ("ramp_w".equalsIgnoreCase(name)) return RAMP_WEST;
+        throw new IllegalArgumentException("Unknown tile shape: " + name);
+    }
 }

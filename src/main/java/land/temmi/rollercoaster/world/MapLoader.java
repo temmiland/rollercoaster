@@ -24,26 +24,32 @@ public final class MapLoader {
         JsonValue tileLayer = required(layers, "tile");
         JsonValue heightLayer = layers.get("height");
         JsonValue collisionLayer = layers.get("collision");
+        JsonValue shapeLayer = layers.get("shape");
         // JsonValue is a linked list, so rows and cells are walked instead of indexed -
         // get(int) would make loading quadratic in the map size.
         JsonValue tileRow = tileLayer.child;
         JsonValue heightRow = heightLayer == null ? null : heightLayer.child;
         JsonValue collisionRow = collisionLayer == null ? null : collisionLayer.child;
+        JsonValue shapeRow = shapeLayer == null ? null : shapeLayer.child;
         for (int z = 0; z < depth; z++) {
             JsonValue tileCell = cells(tileRow, z, width, "tile");
             JsonValue heightCell = heightRow == null ? null : cells(heightRow, z, width, "height");
             JsonValue collisionCell = collisionRow == null ? null : cells(collisionRow, z, width, "collision");
+            JsonValue shapeCell = shapeRow == null ? null : cells(shapeRow, z, width, "shape");
             for (int x = 0; x < width; x++) {
                 map.set(x, z, tileset.get(tileCell.asString()),
                     heightCell == null ? 0f : heightCell.asFloat(),
+                    shapeCell == null ? TileShape.FLAT : TileShape.parse(shapeCell.asString()),
                     collisionCell != null && collisionCell.asInt() != 0);
                 tileCell = tileCell.next;
                 if (heightCell != null) heightCell = heightCell.next;
                 if (collisionCell != null) collisionCell = collisionCell.next;
+                if (shapeCell != null) shapeCell = shapeCell.next;
             }
             tileRow = tileRow.next;
             if (heightRow != null) heightRow = heightRow.next;
             if (collisionRow != null) collisionRow = collisionRow.next;
+            if (shapeRow != null) shapeRow = shapeRow.next;
         }
         Array<MapProp> props = new Array<>();
         JsonValue propArray = root.get("props");
