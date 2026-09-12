@@ -3,6 +3,8 @@
 `LightingEnvironment` shares ambient, directional sun and up to eight point/spot lights
 between the geometry and billboard shaders. `LightingSituation` defines four fixed presets:
 early morning (05:00), day (08:00), early evening (17:00), and night (20:00 until 05:00).
+Night combines brighter cool ambient light with weak directional moonlight, so the world
+remains readable without recreating daytime brightness.
 `DayNightCycle` advances the game clock and keeps the next preset pending until
 `enterMap()` applies it. This avoids continuous lighting changes while the player is in a map.
 
@@ -31,7 +33,8 @@ The depth pass packs depth in two colour channels, with dithering disabled, near
 texture filtering and depth writes enabled before clearing. A texel-aligned light camera,
 3x3 PCF and slope-dependent comparison bias reduce movement shimmer and self-shadowing.
 `setDepthBias` uses normalized depth; excessive values detach shadows from their casters.
-Only direct sunlight is shadowed, so ambient and local lights still illuminate the shade.
+Only the directional sun or moonlight is shadowed, so ambient and local lights still illuminate
+the shade.
 
 Point/spot lights currently do not cast shadows or respect wall occlusion. Billboards
 receive sun shadows but are not supported as casters. There is no bloom or indirect
