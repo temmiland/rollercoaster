@@ -14,9 +14,11 @@ void main() {
     vec3 worldPosition = center + u_billboardRight * a_position.x * width
         + vec3(0.0, (a_position.y + 0.5) * height * u_heightScale, 0.0);
     vec4 clip = u_projViewTrans * vec4(worldPosition, 1.0);
-    vec2 pixels = (clip.xy / clip.w * 0.5 + 0.5) * u_targetSize;
-    pixels = floor(pixels) + 0.5;
-    clip.xy = (pixels / u_targetSize * 2.0 - 1.0) * clip.w;
+    vec4 centerClip = u_projViewTrans * vec4(center, 1.0);
+    vec2 centerPixels = (centerClip.xy / centerClip.w * 0.5 + 0.5) * u_targetSize;
+    centerPixels = floor(centerPixels) + 0.5;
+    vec2 centerNdc = centerPixels / u_targetSize * 2.0 - 1.0;
+    clip.xy += (centerNdc - centerClip.xy / centerClip.w) * clip.w;
     gl_Position = clip;
     v_uv = a_texCoord0;
 }
