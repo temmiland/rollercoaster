@@ -6,6 +6,7 @@ public final class TileMap {
     private final int depth;
     private final TilePrototype[] tiles;
     private final float[] heights;
+    private final boolean[] blocked;
 
     public TileMap(int width, int depth) {
         if (width <= 0 || depth <= 0) throw new IllegalArgumentException("Map dimensions must be positive");
@@ -13,16 +14,23 @@ public final class TileMap {
         this.depth = depth;
         tiles = new TilePrototype[Math.multiplyExact(width, depth)];
         heights = new float[tiles.length];
+        blocked = new boolean[tiles.length];
     }
 
     public void set(int x, int z, TilePrototype tile, float height) {
+        set(x, z, tile, height, false);
+    }
+
+    public void set(int x, int z, TilePrototype tile, float height, boolean blocked) {
         int index = index(x, z);
         tiles[index] = tile;
         heights[index] = height;
+        this.blocked[index] = blocked;
     }
 
     public TilePrototype getTile(int x, int z) { return tiles[index(x, z)]; }
     public float getHeight(int x, int z) { return heights[index(x, z)]; }
+    public boolean isBlocked(int x, int z) { return blocked[index(x, z)]; }
     public int getWidth() { return width; }
     public int getDepth() { return depth; }
 

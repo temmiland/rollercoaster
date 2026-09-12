@@ -73,7 +73,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         playerAnimation = new SpriteAnimation(0.14f, frameA, frameB);
         player = new GridActor(24, 24, 5f);
         player.setTile(12, 14);
-        player.setTileAccess((x, z) -> !(x >= 7 && x <= 10 && z >= 9 && z <= 12));
+        player.setTileAccess((x, z) -> !TestMap.isBlocked(x, z));
         input = new KeyboardInput();
     }
 

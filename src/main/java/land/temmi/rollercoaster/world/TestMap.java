@@ -1,6 +1,7 @@
 package land.temmi.rollercoaster.world;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
@@ -12,6 +13,7 @@ import com.badlogic.gdx.math.Matrix4;
 
 /** Procedural render fixture with four chunks, a path, a plateau and a house. */
 public final class TestMap {
+    private static TileMap loadedTiles;
     private TestMap() { }
 
     public static Array<Model> create() {
@@ -27,20 +29,24 @@ public final class TestMap {
             prototypes.add(plateau);
             TilePrototype house = house();
             prototypes.add(house);
-            TileMap map = new TileMap(24, 24);
-            for (int z = 0; z < map.getDepth(); z++) {
-                for (int x = 0; x < map.getWidth(); x++) {
-                    TilePrototype tile = (x >= 11 && x <= 12 || z >= 14 && z <= 15)
-                        ? path : ((x + z) % 2 == 0 ? grass : lightGrass);
-                    map.set(x, z, tile, 0f);
-                }
-            }
-            map.set(8, 10, house, 0f);
-            map.set(17, 7, plateau, 1f);
+            Tileset tileset = new Tileset()
+                .add("grass", grass)
+                .add("lightGrass", lightGrass)
+                .add("path", path)
+                .add("plateau", plateau)
+                .add("house", house);
+            LoadedMap loaded = new MapLoader().load(
+                Gdx.files.classpath("maps/testfield.json"), tileset);
+            TileMap map = loaded.tiles;
+            loadedTiles = map;
             return new ChunkMesher().build(map, new Material());
         } finally {
             for (TilePrototype prototype : prototypes) prototype.dispose();
         }
+    }
+
+    public static boolean isBlocked(int x, int z) {
+        return loadedTiles != null && loadedTiles.isBlocked(x, z);
     }
 
     private static TilePrototype ground(Color color, float thickness) {

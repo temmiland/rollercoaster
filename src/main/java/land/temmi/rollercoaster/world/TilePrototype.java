@@ -11,6 +11,8 @@ public final class TilePrototype implements Disposable {
         this.model = model;
     }
 
+    public Model getModel() { return model; }
+
     @Override
     public void dispose() {
         model.dispose();
