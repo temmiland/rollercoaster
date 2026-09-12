@@ -1,9 +1,11 @@
 package land.temmi.rollercoaster.world;
 
+import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import land.temmi.rollercoaster.asset.ModelCatalog;
@@ -34,6 +36,22 @@ public final class WorldScene implements Disposable {
 
     public LoadedMap getMap() { return map; }
     public Array<ModelInstance> getInstances() { return instances; }
+
+    /** Fills {@code visible} with instances intersecting the camera frustum. */
+    public Array<ModelInstance> getVisibleInstances(Camera camera, Array<ModelInstance> visible) {
+        if (camera == null || visible == null) throw new IllegalArgumentException("Camera and output are required");
+        visible.clear();
+        BoundingBox bounds = new BoundingBox();
+        Vector3 center = new Vector3();
+        Vector3 dimensions = new Vector3();
+        for (ModelInstance instance : instances) {
+            instance.calculateBoundingBox(bounds);
+            bounds.getCenter(center);
+            bounds.getDimensions(dimensions);
+            if (camera.frustum.boundsInFrustum(center, dimensions)) visible.add(instance);
+        }
+        return visible;
+    }
 
     private void addProp(MapProp prop) {
         ModelDefinition definition = modelCatalog.definition(prop.model);
