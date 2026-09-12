@@ -30,6 +30,7 @@ public class LowResTarget implements Disposable {
     private FrameBuffer sourceFbo;
     private int internalWidth;
     private int internalHeight;
+    private int depthBits;
     private boolean letterboxed;
 
     private FrameBuffer intermediateFbo;
@@ -73,7 +74,9 @@ public class LowResTarget implements Disposable {
         // GL_DEPTH_COMPONENT16 is the only depth format GLES2 guarantees; use 24-bit where GL30 is available.
         if (Gdx.graphics.isGL30Available()) {
             builder.addDepthRenderBuffer(GL30.GL_DEPTH_COMPONENT24);
+            depthBits = 24;
         } else {
+            depthBits = 16;
             builder.addBasicDepthRenderBuffer();
         }
         sourceFbo = builder.build();
@@ -163,6 +166,10 @@ public class LowResTarget implements Disposable {
 
     public int getHeight() {
         return internalHeight;
+    }
+
+    public int getDepthBits() {
+        return depthBits;
     }
 
     @Override

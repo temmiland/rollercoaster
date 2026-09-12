@@ -2,8 +2,10 @@ package land.temmi.rollercoaster;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
@@ -35,6 +37,7 @@ public class RollercoasterGame extends ApplicationAdapter {
     private LowResTarget lowRes;
     private PixelCamera pixelCamera;
     private SpriteBatch blitBatch;
+    private BitmapFont debugFont;
     private ShapeRenderer shapes;
     private final Matrix4 overlayProjection = new Matrix4();
 
@@ -47,6 +50,7 @@ public class RollercoasterGame extends ApplicationAdapter {
     private InputSource input;
     private SpriteAnimation playerAnimation;
     private final Vector3 subjectFootPosition = new Vector3(0f, 0f, 0f);
+    private boolean debugVisible;
 
     @Override
     public void create() {
@@ -57,6 +61,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         pixelCamera.resize(lowRes.getWidth(), lowRes.getHeight());
 
         blitBatch = new SpriteBatch();
+        debugFont = new BitmapFont();
         shapes = new ShapeRenderer();
 
         modelBatch = new ModelBatch(new WorldShaderProvider());
@@ -91,6 +96,7 @@ public class RollercoasterGame extends ApplicationAdapter {
     @Override
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F3)) debugVisible = !debugVisible;
         player.update(delta, input.pollMove());
         playerAnimation.setPlaying(player.isMoving());
         playerAnimation.update(delta);
@@ -112,6 +118,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         modelBatch.end();
 
         drawPixelRuler();
+        if (debugVisible) drawDebugOverlay();
         lowRes.end();
 
         lowRes.blitToScreen(blitBatch);
@@ -152,10 +159,29 @@ public class RollercoasterGame extends ApplicationAdapter {
         shapes.end();
     }
 
+    private void drawDebugOverlay() {
+        int width = lowRes.getWidth();
+        int height = lowRes.getHeight();
+        String text = "FPS " + Gdx.graphics.getFramesPerSecond()
+            + "  GL " + Gdx.gl.glGetString(GL20.GL_VERSION)
+            + "  depth " + lowRes.getDepthBits() + "b\n"
+            + "FBO " + width + "x" + height
+            + "  tile " + player.getTileX() + "," + player.getTileZ()
+            + "  world " + subjectFootPosition.x + "," + subjectFootPosition.z + "\n"
+            + "camera fov " + pixelCamera.getFovDegrees()
+            + " pitch " + pixelCamera.getPitchDegrees()
+            + " distance " + pixelCamera.getDistance();
+        blitBatch.setProjectionMatrix(overlayProjection.setToOrtho2D(0, 0, width, height));
+        blitBatch.begin();
+        debugFont.draw(blitBatch, text, 10f, height - 10f);
+        blitBatch.end();
+    }
+
     @Override
     public void dispose() {
         lowRes.dispose();
         blitBatch.dispose();
+        debugFont.dispose();
         shapes.dispose();
         modelBatch.dispose();
         playerSprite.dispose();

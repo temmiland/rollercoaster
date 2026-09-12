@@ -28,6 +28,10 @@ public class PixelCamera {
         this.pitchDegrees = pitchDegrees;
     }
 
+    public float getFovDegrees() { return fovDegrees; }
+    public float getPitchDegrees() { return pitchDegrees; }
+    public float getDistance() { return distance; }
+
     public void resize(int internalWidth, int internalHeight) {
         camera.viewportWidth = internalWidth;
         camera.viewportHeight = internalHeight;
