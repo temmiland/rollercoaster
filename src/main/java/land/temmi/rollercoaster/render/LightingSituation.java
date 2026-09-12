@@ -6,11 +6,11 @@ import com.badlogic.gdx.math.Vector3;
 /** A fixed lighting preset selected by the in-game clock. */
 public enum LightingSituation {
     EARLY_MORNING("early morning", 5f, 0.35f,
-        new Color(0.70f, 0.76f, 0.95f, 1f), 0.36f,
-        new Vector3(-0.55f, 0.65f, -0.35f), new Color(1f, 0.68f, 0.45f, 1f), 0.40f),
+        new Color(0.58f, 0.48f, 0.66f, 1f), 0.34f,
+        new Vector3(-0.55f, 0.65f, -0.35f), new Color(1f, 0.40f, 0.20f, 1f), 0.38f),
     DAY("day", 8f, 0f,
-        new Color(0.82f, 0.90f, 1f, 1f), 0.34f,
-        new Vector3(-0.45f, 0.90f, -0.20f), new Color(1f, 0.95f, 0.85f, 1f), 0.95f),
+        new Color(0.70f, 0.78f, 0.92f, 1f), 0.28f,
+        new Vector3(-0.45f, 0.90f, -0.20f), new Color(1f, 0.92f, 0.80f, 1f), 0.70f),
     EARLY_EVENING("early evening", 17f, 0.40f,
         new Color(0.60f, 0.52f, 0.70f, 1f), 0.36f,
         new Vector3(0.55f, 0.55f, -0.35f), new Color(1f, 0.55f, 0.30f, 1f), 0.38f),
