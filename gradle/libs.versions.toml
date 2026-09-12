@@ -1,0 +1,7 @@
+[versions]
+gdx = "1.14.2"
+gltf = "2.3.0"
+
+[libraries]
+gdx-core = { module = "com.badlogicgames.gdx:gdx", version.ref = "gdx" }
+gdx-gltf = { module = "com.github.mgsx-dev.gdx-gltf:gltf", version.ref = "gltf" }
