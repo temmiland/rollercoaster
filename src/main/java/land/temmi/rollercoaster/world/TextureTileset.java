@@ -10,17 +10,18 @@ import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 
 /** Loads an editor atlas and exposes flat, textured tile prototypes for terrain meshing. */
 public final class TextureTileset implements Disposable {
-    private final TilesetManifest manifest;
     private final Texture atlas;
     private final Tileset tileset = new Tileset();
+    private final Array<TilePrototype> prototypes = new Array<>();
+    private boolean disposed;
 
     public TextureTileset(TilesetManifest manifest) {
         if (manifest == null) throw new IllegalArgumentException("Tileset manifest is required");
-        this.manifest = manifest;
         atlas = new Texture(Gdx.files.classpath(manifest.texture));
         atlas.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         try {
@@ -29,7 +30,9 @@ public final class TextureTileset implements Disposable {
                     || definition.atlasY + definition.atlasHeight > atlas.getHeight()) {
                     throw new IllegalArgumentException("Tile region outside atlas: " + definition.id);
                 }
-                tileset.add(definition.id, new TilePrototype(createPrototype(definition)));
+                TilePrototype prototype = new TilePrototype(createPrototype(definition));
+                prototypes.add(prototype);
+                tileset.add(definition.id, prototype);
             }
         } catch (RuntimeException failure) {
             dispose();
@@ -58,15 +61,14 @@ public final class TextureTileset implements Disposable {
         return builder.end();
     }
 
+    /** Idempotent, so a failed construction can clean up without double-disposing the atlas. */
     @Override
     public void dispose() {
-        for (TileDefinition definition : manifest.tiles) {
-            try {
-                tileset.get(definition.id).dispose();
-            } catch (RuntimeException ignored) {
-                // Keep disposal best-effort if construction failed midway.
-            }
+        for (TilePrototype prototype : prototypes) prototype.dispose();
+        prototypes.clear();
+        if (!disposed) {
+            disposed = true;
+            atlas.dispose();
         }
-        atlas.dispose();
     }
 }
