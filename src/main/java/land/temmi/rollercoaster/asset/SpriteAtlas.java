@@ -1,6 +1,7 @@
 package land.temmi.rollercoaster.asset;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.utils.Disposable;
@@ -27,6 +28,12 @@ public final class SpriteAtlas implements Disposable {
     }
 
     public TextureAtlas getAtlas() { return atlas; }
+
+    /** Returns the page texture for single-page billboard renderers. */
+    public Texture getTexture() {
+        if (atlas.getTextures().size != 1) throw new IllegalStateException("Sprite atlas must have one page");
+        return atlas.getTextures().first();
+    }
 
     @Override
     public void dispose() { atlas.dispose(); }
