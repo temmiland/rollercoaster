@@ -32,7 +32,8 @@ public final class MapLoader {
         Array<MapProp> props = new Array<>();
         JsonValue propArray = root.get("props");
         if (propArray != null) for (JsonValue prop = propArray.child; prop != null; prop = prop.next) {
-            props.add(new MapProp(requiredString(prop, "model"), prop.getFloat("x"), prop.getFloat("y", 0f), prop.getFloat("rot", 0f)));
+            props.add(new MapProp(requiredString(prop, "model"), prop.getFloat("x"), prop.getFloat("y", 0f),
+                prop.getFloat("elevation", 0f), prop.getFloat("rot", 0f)));
         }
         Array<MapEntity> entities = new Array<>();
         JsonValue entityArray = root.get("entities");

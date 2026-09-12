@@ -82,6 +82,6 @@
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ]
   },
-  "props": [{ "model": "house", "x": 8, "y": 10, "rot": 0 }],
+  "props": [{ "model": "house", "x": 8, "y": 10, "elevation": 0, "rot": 0 }],
   "entities": [{ "type": "player", "sprite": "player", "x": 12, "y": 14 }]
 }

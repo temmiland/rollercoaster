@@ -45,7 +45,7 @@ public final class WorldScene implements Disposable {
         float offsetZ = definition.offsetX * definition.scale * MathUtils.sin(radians)
             + definition.offsetZ * definition.scale * MathUtils.cos(radians);
         instance.transform.setToTranslation(prop.x + offsetX,
-            map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)) + definition.offsetY,
+            map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)) + prop.elevation + definition.offsetY,
             prop.z + offsetZ)
             .scale(definition.scale, definition.scale, definition.scale)
             .rotate(Vector3.Y, prop.rotation);
