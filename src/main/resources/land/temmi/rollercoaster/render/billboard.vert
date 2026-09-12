@@ -5,6 +5,7 @@ uniform mat4 u_worldTrans;
 uniform vec2 u_targetSize;
 uniform vec3 u_billboardRight;
 uniform float u_heightScale;
+uniform vec4 u_uvTransform;
 varying vec2 v_uv;
 
 void main() {
@@ -20,5 +21,5 @@ void main() {
     vec2 centerNdc = centerPixels / u_targetSize * 2.0 - 1.0;
     clip.xy += (centerNdc - centerClip.xy / centerClip.w) * clip.w;
     gl_Position = clip;
-    v_uv = a_texCoord0;
+    v_uv = a_texCoord0 * u_uvTransform.zw + u_uvTransform.xy;
 }

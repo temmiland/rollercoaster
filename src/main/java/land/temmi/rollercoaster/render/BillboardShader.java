@@ -50,6 +50,7 @@ final class BillboardShader implements Shader {
         TextureAttribute texture = (TextureAttribute) renderable.material.get(TextureAttribute.Diffuse);
         program.setUniformMatrix("u_worldTrans", renderable.worldTransform);
         program.setUniformi("u_texture", context.textureBinder.bind(texture.textureDescription));
+        program.setUniformf("u_uvTransform", texture.offsetU, texture.offsetV, texture.scaleU, texture.scaleV);
         renderable.meshPart.render(program);
     }
 
