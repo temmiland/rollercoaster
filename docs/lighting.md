@@ -3,8 +3,9 @@
 `LightingEnvironment` shares ambient, directional sun and up to eight point/spot lights
 between the geometry and billboard shaders. `LightingSituation` defines four fixed presets:
 early morning (05:00), day (08:00), early evening (17:00), and night (20:00 until 05:00).
-Early morning uses a warm red sun, while the day preset keeps both ambient and direct light
-muted. Night combines brighter cool ambient light with weak directional moonlight, so the world
+Early morning uses a warm red sun, while the day preset is close to neutral so texture colours
+remain unchanged. Early evening combines warm sunset light with a cool blue ambient fill. Night
+combines brighter cool ambient light with weak directional moonlight, so the world
 remains readable without recreating daytime brightness.
 `DayNightCycle` advances the game clock and keeps the next preset pending until
 `enterMap()` applies it. This avoids continuous lighting changes while the player is in a map.
