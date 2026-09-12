@@ -10,8 +10,8 @@ import land.temmi.rollercoaster.actor.GridActor;
  * {@code maxStepHeight} a statement about climbing rather than about tile spacing.
  */
 public final class TerrainRules implements GridActor.TileAccess {
-    /** Half a level, so a ramp tile is climbable and the cliff beside it is not. */
-    public static final float DEFAULT_MAX_STEP_HEIGHT = 0.5f;
+    /** Numerical tolerance for flush terrain edges; ramps provide the climb between complete levels. */
+    public static final float DEFAULT_MAX_STEP_HEIGHT = 0.0001f;
 
     public enum Step {
         ALLOWED,
