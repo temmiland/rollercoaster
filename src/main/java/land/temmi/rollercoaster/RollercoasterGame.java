@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
@@ -18,6 +17,9 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import land.temmi.rollercoaster.render.LowResTarget;
 import land.temmi.rollercoaster.render.PixelCamera;
+import land.temmi.rollercoaster.render.WorldShaderProvider;
+import land.temmi.rollercoaster.world.TestMap;
+import com.badlogic.gdx.utils.Array;
 
 public class RollercoasterGame extends ApplicationAdapter {
 
@@ -33,7 +35,8 @@ public class RollercoasterGame extends ApplicationAdapter {
     private final Matrix4 overlayProjection = new Matrix4();
 
     private ModelBatch modelBatch;
-    private Environment environment;
+    private Array<Model> chunks;
+    private final Array<ModelInstance> world = new Array<>();
     private Model subjectModel;
     private ModelInstance subjectInstance;
     private final Vector3 subjectFootPosition = new Vector3(0f, 0f, 0f);
@@ -53,9 +56,9 @@ public class RollercoasterGame extends ApplicationAdapter {
         blitBatch = new SpriteBatch();
         shapes = new ShapeRenderer();
 
-        modelBatch = new ModelBatch();
-        environment = new Environment();
-        environment.set(ColorAttribute.createAmbientLight(1f, 1f, 1f, 1f));
+        modelBatch = new ModelBatch(new WorldShaderProvider());
+        chunks = TestMap.create();
+        for (Model chunk : chunks) world.add(new ModelInstance(chunk));
 
         ModelBuilder builder = new ModelBuilder();
         Material material = new Material(ColorAttribute.createDiffuse(Color.ORANGE));
@@ -74,10 +77,9 @@ public class RollercoasterGame extends ApplicationAdapter {
 
     @Override
     public void render() {
-        // Slow drift so the camera sits at arbitrary sub-pixel offsets, which is what
-        // pixel-snapping has to absorb. Replaced by real input in a later step.
+        // Bounded drift keeps the map visible while exercising camera snapping.
         driftTime += Gdx.graphics.getDeltaTime();
-        subjectFootPosition.x = driftTime * 0.05f;
+        subjectFootPosition.set(12f + (float) Math.sin(driftTime * 0.15f) * 2f, 0f, 14f);
 
         pixelCamera.follow(subjectFootPosition, SUBJECT_WORLD_HEIGHT, SUBJECT_PIXEL_HEIGHT);
         pixelCamera.snapToPixelGrid(lowRes.getWidth(), lowRes.getHeight());
@@ -101,7 +103,8 @@ public class RollercoasterGame extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
         modelBatch.begin(pixelCamera.camera);
-        modelBatch.render(subjectInstance, environment);
+        modelBatch.render(world);
+        modelBatch.render(subjectInstance);
         modelBatch.end();
 
         drawPixelRuler();
@@ -133,5 +136,6 @@ public class RollercoasterGame extends ApplicationAdapter {
         shapes.dispose();
         modelBatch.dispose();
         subjectModel.dispose();
+        for (Model chunk : chunks) chunk.dispose();
     }
 }
