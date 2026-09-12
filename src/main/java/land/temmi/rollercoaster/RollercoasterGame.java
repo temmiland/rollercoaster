@@ -70,6 +70,7 @@ public class RollercoasterGame extends ApplicationAdapter {
         TextureRegion frameA = new TextureRegion(spriteTexture, 0, 0, 16, 24);
         TextureRegion frameB = new TextureRegion(spriteTexture, 16, 0, 16, 24);
         playerSprite = new BillboardRenderer(spriteTexture, frameA, SUBJECT_WORLD_HEIGHT);
+        playerSprite.setBottomPadding(3f / 24f);
         playerAnimation = new SpriteAnimation(0.14f, frameA, frameB);
         player = new GridActor(24, 24, 5f);
         player.setTile(12, 14);

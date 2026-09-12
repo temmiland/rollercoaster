@@ -28,6 +28,7 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     private final Vector3 center = new Vector3();
     private float worldHeight = 1.8f;
     private float aspect = 0.75f;
+    private float bottomPadding;
     private boolean visible = true;
 
     public BillboardRenderer(Texture texture, TextureRegion region, float worldHeight) {
@@ -52,6 +53,10 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     public Vector3 getPosition() { return center; }
     public void setWorldHeight(float worldHeight) { this.worldHeight = worldHeight; }
     public void setAspect(float aspect) { this.aspect = aspect; }
+    public void setBottomPadding(float fraction) {
+        if (fraction < 0f || fraction >= 1f) throw new IllegalArgumentException("Invalid billboard bottom padding");
+        bottomPadding = fraction;
+    }
     public void setVisible(boolean visible) { this.visible = visible; }
     public void setRegion(TextureRegion next) {
         if (next == null || next.getTexture() != texture) throw new IllegalArgumentException("Region must belong to the billboard texture");
@@ -70,7 +75,7 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
         renderable.meshPart.set(meshPart);
         renderable.material = material;
         renderable.userData = TAG;
-        renderable.worldTransform.setToTranslation(center);
+        renderable.worldTransform.setToTranslation(center.x, center.y - worldHeight * bottomPadding, center.z);
         renderable.worldTransform.scl(worldHeight * aspect, worldHeight, 1f);
         renderables.add(renderable);
     }
