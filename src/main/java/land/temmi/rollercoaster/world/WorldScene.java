@@ -19,6 +19,9 @@ import land.temmi.rollercoaster.asset.ModelDefinition;
  * The model catalog stays owned by the caller, because props only reference its registered models.
  */
 public final class WorldScene implements Disposable {
+    /** Marker copied to terrain renderables so only the ground receives the shadow map. */
+    public static final Object TERRAIN_TAG = new Object();
+
     private final LoadedMap map;
     private final Array<Model> chunks;
     private final ModelCatalog modelCatalog;
@@ -39,7 +42,11 @@ public final class WorldScene implements Disposable {
         this.modelCatalog = modelCatalog;
         this.surface = new TerrainSurface(map.tiles);
         try {
-            for (Model chunk : chunks) addInstance(new ModelInstance(chunk));
+            for (Model chunk : chunks) {
+                ModelInstance terrain = new ModelInstance(chunk);
+                terrain.userData = TERRAIN_TAG;
+                addInstance(terrain);
+            }
             for (MapProp prop : map.props) addProp(prop);
         } catch (RuntimeException failure) {
             disposeChunks();

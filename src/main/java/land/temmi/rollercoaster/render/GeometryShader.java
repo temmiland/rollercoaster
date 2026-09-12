@@ -17,6 +17,7 @@ import com.badlogic.gdx.math.Matrix3;
 import net.mgsx.gltf.scene3d.attributes.PBRColorAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRTextureAttribute;
 import net.mgsx.gltf.scene3d.attributes.PBRFloatAttribute;
+import land.temmi.rollercoaster.world.WorldScene;
 
 final class GeometryShader implements Shader {
     private final boolean colored;
@@ -115,7 +116,12 @@ final class GeometryShader implements Shader {
             program.setUniformi("u_diffuseTexture", context.textureBinder.bind(texture.textureDescription));
             program.setUniformf("u_uvTransform", texture.offsetU, texture.offsetV, texture.scaleU, texture.scaleV);
         }
-        if (shadows != null) shadowUniforms.apply(program, shadows, context.textureBinder);
+        if (shadows != null) {
+            // The shadow map is a ground effect. Props and other vertical geometry still receive
+            // direct sun/point/ambient light, but are never darkened by the map themselves.
+            program.setUniformi("u_shadowReceiver", renderable.userData == WorldScene.TERRAIN_TAG ? 1 : 0);
+            shadowUniforms.apply(program, shadows, context.textureBinder);
+        }
         renderable.meshPart.render(program);
     }
 

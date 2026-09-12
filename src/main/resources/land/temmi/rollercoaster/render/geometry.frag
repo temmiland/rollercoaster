@@ -14,6 +14,7 @@ uniform float u_shadowTexelSize;
 uniform float u_shadowBias;
 uniform float u_shadowStrength;
 uniform int u_shadowEnabled;
+uniform int u_shadowReceiver;
 varying VARYING_PRECISION vec4 v_shadowPosition;
 #endif
 uniform vec4 u_diffuseColor;
@@ -44,7 +45,7 @@ float decodeDepth(vec4 encoded) {
 }
 
 float shadowVisibility() {
-    if (u_shadowEnabled == 0) return 1.0;
+    if (u_shadowEnabled == 0 || u_shadowReceiver == 0) return 1.0;
     vec3 projected = v_shadowPosition.xyz / v_shadowPosition.w;
     if (projected.x <= 0.0 || projected.x >= 1.0 || projected.y <= 0.0 || projected.y >= 1.0
         || projected.z <= 0.0 || projected.z >= 1.0) return 1.0;

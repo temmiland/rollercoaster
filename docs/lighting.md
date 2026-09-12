@@ -28,7 +28,8 @@ lowRes.end();
 ```
 
 Submit all opaque casters in range, including objects outside the view camera frustum.
-Terrain and model geometry cast shadows; geometry and billboards receive them. This is
+Terrain is the shadow receiver: model geometry and terrain cast shadows onto the ground, while
+models and billboards keep their direct lighting without being darkened by the ground shadow map. This is
 one directional shadow map, not cascades. `setWorldSize` controls its square world-space
 coverage; `setLightDistance` controls placement/depth range. Outside that volume, sun
 lighting remains unshadowed. Dispose the map separately from the main ModelBatch.
@@ -43,7 +44,7 @@ Only the directional sun or moonlight is shadowed, so ambient and local lights s
 the shade.
 
 Point/spot lights currently do not cast shadows or respect wall occlusion. Billboards
-receive sun shadows but are not supported as casters. There is no bloom or indirect
+are not supported as shadow casters or receivers. There is no bloom or indirect
 illumination. Device GL validation is still needed; desktop tests exercise GL 2.1.
 Billboards use a restrained upward fill for near-overhead lights, so characters remain
 readable with the short shadow vector while front-facing light still controls the response.
@@ -67,7 +68,8 @@ time changes. A game can call `cycleSituation()` for a preview or debug control.
 ## Verification
 
 In the sibling example repository run `./gradlew :lightingSmokeTest --offline`.
-It measures model and terrain shadow contrast, clearing after moving a caster, light
-range, emission in darkness and daytime/nighttime switching. It also saves day and
+It measures model and terrain shadow contrast, verifies that non-ground geometry does not receive
+the ground shadow map, checks clearing after moving a caster, light range, emission in darkness
+and daytime/nighttime switching. It also saves day and
 night screenshots in the Java temporary directory. The regular `:renderSmokeTest`
 continues to verify depth ordering, textures, map loading and terrain behavior.

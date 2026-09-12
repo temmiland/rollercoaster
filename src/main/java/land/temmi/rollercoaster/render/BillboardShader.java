@@ -62,7 +62,11 @@ final class BillboardShader implements Shader {
         program.setUniformMatrix("u_worldTrans", renderable.worldTransform);
         program.setUniformi("u_texture", context.textureBinder.bind(texture.textureDescription));
         program.setUniformf("u_uvTransform", texture.offsetU, texture.offsetV, texture.scaleU, texture.scaleV);
-        if (shadows != null) shadowUniforms.apply(program, shadows, context.textureBinder);
+        if (shadows != null) {
+            // Sprites are lit directly and do not receive the ground shadow map.
+            program.setUniformi("u_shadowReceiver", 0);
+            shadowUniforms.apply(program, shadows, context.textureBinder);
+        }
         renderable.meshPart.render(program);
     }
 
