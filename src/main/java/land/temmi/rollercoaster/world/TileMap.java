@@ -28,14 +28,35 @@ public final class TileMap {
         this.blocked[index] = blocked;
     }
 
+    /** Marks a tile impassable without changing its geometry; used for derived prop footprints. */
+    public void setBlocked(int x, int z, boolean blocked) {
+        this.blocked[index(x, z)] = blocked;
+    }
+
     public TilePrototype getTile(int x, int z) { return tiles[index(x, z)]; }
     public float getHeight(int x, int z) { return heights[index(x, z)]; }
     public boolean isBlocked(int x, int z) { return blocked[index(x, z)]; }
+
+    /** Surface form of the tile; an empty cell counts as flat. */
+    public TileShape getShape(int x, int z) {
+        TilePrototype tile = tiles[index(x, z)];
+        return tile == null ? TileShape.FLAT : tile.getShape();
+    }
+
+    /** Combines the map's collision layer with the tile type's own walkability. */
+    public boolean isWalkable(int x, int z) {
+        int index = index(x, z);
+        if (blocked[index]) return false;
+        TilePrototype tile = tiles[index];
+        return tile == null || tile.isWalkable();
+    }
+
+    public boolean contains(int x, int z) { return x >= 0 && x < width && z >= 0 && z < depth; }
     public int getWidth() { return width; }
     public int getDepth() { return depth; }
 
     private int index(int x, int z) {
-        if (x < 0 || x >= width || z < 0 || z >= depth) throw new IndexOutOfBoundsException();
+        if (!contains(x, z)) throw new IndexOutOfBoundsException("Tile outside map: " + x + "," + z);
         return z * width + x;
     }
 }

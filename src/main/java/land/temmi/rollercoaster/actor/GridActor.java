@@ -7,14 +7,17 @@ import land.temmi.rollercoaster.input.MoveIntent;
 public final class GridActor {
     private static final float WORLD_OFFSET_X = -0.5f;
     private static final float WORLD_OFFSET_Z = -0.5f;
-    /** Half a tile level, so a ramp tile is climbable but the cliff beside it is not. */
-    private static final float DEFAULT_MAX_STEP_HEIGHT = 0.5f;
 
+    /**
+     * Terrain the actor walks on. The step rule itself lives with the terrain, so the editor can
+     * ask exactly the same question the runtime does; {@code TerrainRules} is its implementation.
+     */
     public interface TileAccess {
-        boolean canEnter(int x, int z);
+        /** Whether a single step from the given tile towards {@code dx}/{@code dz} is allowed. */
+        boolean canStep(int fromX, int fromZ, int dx, int dz);
 
-        /** World-Y of the walkable surface on that tile. */
-        default float heightAt(int x, int z) { return 0f; }
+        /** World-Y of the walkable surface at that tile's centre. */
+        float heightAt(int x, int z);
     }
 
     private final int width;
@@ -27,7 +30,6 @@ public final class GridActor {
     private int targetX;
     private int targetZ;
     private float progress;
-    private float maxStepHeight = DEFAULT_MAX_STEP_HEIGHT;
     private boolean moving;
     private TileAccess tileAccess;
 
@@ -52,12 +54,6 @@ public final class GridActor {
         if (!moving) position.y = heightAt(tileX, tileZ);
     }
 
-    /** Largest height difference a single step may cross; above it the step is refused. */
-    public void setMaxStepHeight(float maxStepHeight) {
-        if (maxStepHeight < 0f) throw new IllegalArgumentException("Max step height must not be negative");
-        this.maxStepHeight = maxStepHeight;
-    }
-
     public void update(float delta, MoveIntent intent) {
         if (moving) {
             progress = Math.min(1f, progress + Math.max(0f, delta) * speed);
@@ -78,8 +74,8 @@ public final class GridActor {
         facing = intent.facing;
         int nextX = tileX + facing.dx;
         int nextZ = tileZ + facing.dz;
-        if (!inside(nextX, nextZ) || tileAccess != null && !tileAccess.canEnter(nextX, nextZ)) return;
-        if (Math.abs(heightAt(nextX, nextZ) - heightAt(tileX, tileZ)) > maxStepHeight) return;
+        if (!inside(nextX, nextZ)) return;
+        if (tileAccess != null && !tileAccess.canStep(tileX, tileZ, facing.dx, facing.dz)) return;
         targetX = nextX;
         targetZ = nextZ;
         progress = 0f;
