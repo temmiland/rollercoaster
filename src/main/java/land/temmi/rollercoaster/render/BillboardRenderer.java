@@ -38,10 +38,10 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
         if (region.getRegionHeight() > 0) aspect = region.getRegionWidth() / (float) region.getRegionHeight();
         mesh = new Mesh(true, 4, 6, com.badlogic.gdx.graphics.VertexAttribute.Position(),
             com.badlogic.gdx.graphics.VertexAttribute.TexCoords(0));
-        mesh.setVertices(new float[] {-0.5f, -0.5f, 0f, region.getU(), region.getV2(),
-            0.5f, -0.5f, 0f, region.getU2(), region.getV2(),
-            0.5f, 0.5f, 0f, region.getU2(), region.getV(),
-            -0.5f, 0.5f, 0f, region.getU(), region.getV()});
+        mesh.setVertices(new float[] {-0.5f, -0.5f, 0f, region.getU(), region.getV(),
+            0.5f, -0.5f, 0f, region.getU2(), region.getV(),
+            0.5f, 0.5f, 0f, region.getU2(), region.getV2(),
+            -0.5f, 0.5f, 0f, region.getU(), region.getV2()});
         mesh.setIndices(new short[] {0, 1, 2, 2, 3, 0});
         meshPart = new MeshPart("billboard", mesh, 0, 6, GL20.GL_TRIANGLES);
         material = new Material(com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute.createDiffuse(texture));
