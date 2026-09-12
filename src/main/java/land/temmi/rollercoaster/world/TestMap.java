@@ -13,7 +13,7 @@ import com.badlogic.gdx.math.MathUtils;
 import land.temmi.rollercoaster.asset.ModelCatalog;
 import land.temmi.rollercoaster.asset.ModelDefinition;
 import land.temmi.rollercoaster.asset.ModelManifest;
-import land.temmi.rollercoaster.asset.ProceduralModels;
+import land.temmi.rollercoaster.asset.GltfModelFactory;
 
 /** Procedural render fixture with four chunks, a path, a plateau and a house. */
 public final class TestMap {
@@ -66,7 +66,7 @@ public final class TestMap {
                 validateCollision(prop, definition);
                 models.add(getModelCatalog().create(prop.model));
             } catch (RuntimeException failure) {
-                for (Model model : models) model.dispose();
+                getModelCatalog().dispose();
                 throw failure;
             }
         }
@@ -77,8 +77,8 @@ public final class TestMap {
         if (modelCatalog == null) {
             modelCatalog = new ModelCatalog();
             for (ModelDefinition definition : ModelManifest.load(Gdx.files.classpath("maps/models.json"))) {
-                if ("procedural:house".equals(definition.source)) {
-                    modelCatalog.register(definition, ProceduralModels::house);
+                if (definition.source.startsWith("gltf:") || definition.source.startsWith("glb:")) {
+                    modelCatalog.register(definition, new GltfModelFactory(definition.source.substring(5)));
                 } else {
                     throw new IllegalArgumentException("Unknown model source: " + definition.source);
                 }

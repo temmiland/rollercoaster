@@ -58,7 +58,7 @@ public class PixelCamera {
 
         halfFovRad = (camera.fieldOfView * 0.5f) * MathUtils.degreesToRadians;
         distance = (subjectWorldHeight * camera.viewportHeight)
-            / (2f * subjectPixelHeight * MathUtils.tan(halfFovRad));
+            / (2f * subjectPixelHeight * (float)Math.tan(halfFovRad));
 
         camera.position.set(billboardCenter).mulAdd(camera.direction, -distance);
         camera.update();
@@ -75,7 +75,7 @@ public class PixelCamera {
      * corrects for that drift, which affects every point in the scene uniformly.
      */
     public void snapToPixelGrid(int internalWidth, int internalHeight) {
-        float worldUnitsPerPixel = (2f * distance * MathUtils.tan(halfFovRad)) / internalHeight;
+        float worldUnitsPerPixel = (2f * distance * (float)Math.tan(halfFovRad)) / internalHeight;
 
         float rightComponent = camera.position.dot(right);
         float upComponent = camera.position.dot(camera.up);

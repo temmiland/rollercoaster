@@ -204,9 +204,9 @@ public class RollercoasterGame extends ApplicationAdapter {
         debugFont.dispose();
         shapes.dispose();
         modelBatch.dispose();
+        TestMap.getModelCatalog().dispose();
         playerSprite.dispose();
         spriteTexture.dispose();
         for (Model chunk : chunks) chunk.dispose();
-        for (Model prop : propModels) prop.dispose();
     }
 }

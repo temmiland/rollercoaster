@@ -5,7 +5,10 @@ import com.badlogic.gdx.utils.ObjectMap;
 
 /** Maps stable map model IDs to model factories. */
 public final class ModelCatalog {
-    public interface Factory { Model create(); }
+    public interface Factory {
+        Model create();
+        default void dispose() { }
+    }
 
     private static final class Entry {
         public final ModelDefinition definition;
@@ -49,5 +52,10 @@ public final class ModelCatalog {
         Entry entry = entries.get(id);
         if (entry == null) throw new IllegalArgumentException("Unknown model ID: " + id);
         return entry;
+    }
+
+    public void dispose() {
+        for (Entry entry : entries.values()) entry.factory.dispose();
+        entries.clear();
     }
 }

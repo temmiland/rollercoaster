@@ -9,4 +9,5 @@ java {
 
 dependencies {
     api libs.gdx.core
+    api libs.gdx.gltf
 }
