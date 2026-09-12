@@ -28,11 +28,7 @@ public final class WorldSceneLoader {
         }
         LoadedMap map = mapLoader.load(mapFile, tileset);
         Array<Model> chunks = chunkMesher.build(map.tiles, terrainMaterial);
-        try {
-            return new WorldScene(map, chunks, modelCatalog);
-        } catch (RuntimeException failure) {
-            for (Model chunk : chunks) chunk.dispose();
-            throw failure;
-        }
+        // WorldScene disposes the chunks itself if it cannot take them on.
+        return new WorldScene(map, chunks, modelCatalog);
     }
 }

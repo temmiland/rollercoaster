@@ -11,7 +11,12 @@ import com.badlogic.gdx.utils.Disposable;
 import land.temmi.rollercoaster.asset.ModelCatalog;
 import land.temmi.rollercoaster.asset.ModelDefinition;
 
-/** Runtime scene containing baked terrain and map props. */
+/**
+ * Runtime scene containing baked terrain and map props.
+ *
+ * <p>Takes ownership of the chunk models - including when construction fails - and disposes them.
+ * The model catalog stays owned by the caller, because props only reference its registered models.
+ */
 public final class WorldScene implements Disposable {
     private final LoadedMap map;
     private final Array<Model> chunks;
@@ -30,7 +35,7 @@ public final class WorldScene implements Disposable {
             for (Model chunk : chunks) addInstance(new ModelInstance(chunk));
             for (MapProp prop : map.props) addProp(prop);
         } catch (RuntimeException failure) {
-            dispose();
+            disposeChunks();
             throw failure;
         }
     }
@@ -93,8 +98,12 @@ public final class WorldScene implements Disposable {
 
     @Override
     public void dispose() {
+        disposeChunks();
+    }
+
+    private void disposeChunks() {
         for (Model chunk : chunks) chunk.dispose();
-        modelCatalog.dispose();
+        chunks.clear();
         instances.clear();
         bounds.clear();
     }
