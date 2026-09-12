@@ -64,9 +64,9 @@ Diffuse lighting is multiplied by the material colour before final framebuffer c
 Local lights use a smooth finite-range falloff and spot cone attenuation. Tune position,
 range and intensity together. Keep lamps outside solid geometry. The example puts warm
 point lights at street fixtures and outward/downward spot lights at the house windows.
-Its `ExampleLighting` switches all local sources and emissive materials off during the
-day, uses fixed intensities in the other presets, and preserves the manual L override across
-time changes. A game can call `cycleSituation()` for a preview or debug control.
+Its `ExampleLighting` switches all local sources and emissive materials off from early morning
+through the day, uses fixed intensities in the evening and at night, and preserves the manual L
+override across time changes. A game can call `cycleSituation()` for a preview or debug control.
 
 ## Verification
 
