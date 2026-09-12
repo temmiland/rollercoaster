@@ -19,12 +19,25 @@ public final class ModelDefinition {
     public final int collisionMaxX;
     public final int collisionMinZ;
     public final int collisionMaxZ;
+    /** Tilt the prop onto the terrain slope instead of keeping it upright. */
+    public final boolean alignToSlope;
 
     public ModelDefinition(String id, String source, float offsetX, float offsetY, float offsetZ,
                            float scale, float height,
                            float boundsMinX, float boundsMinY, float boundsMinZ,
                            float boundsMaxX, float boundsMaxY, float boundsMaxZ,
                            int collisionMinX, int collisionMaxX, int collisionMinZ, int collisionMaxZ) {
+        this(id, source, offsetX, offsetY, offsetZ, scale, height,
+            boundsMinX, boundsMinY, boundsMinZ, boundsMaxX, boundsMaxY, boundsMaxZ,
+            collisionMinX, collisionMaxX, collisionMinZ, collisionMaxZ, false);
+    }
+
+    public ModelDefinition(String id, String source, float offsetX, float offsetY, float offsetZ,
+                           float scale, float height,
+                           float boundsMinX, float boundsMinY, float boundsMinZ,
+                           float boundsMaxX, float boundsMaxY, float boundsMaxZ,
+                           int collisionMinX, int collisionMaxX, int collisionMinZ, int collisionMaxZ,
+                           boolean alignToSlope) {
         if (id == null || id.length() == 0 || source == null || source.length() == 0) {
             throw new IllegalArgumentException("Model ID and source are required");
         }
@@ -51,5 +64,6 @@ public final class ModelDefinition {
         this.collisionMaxX = collisionMaxX;
         this.collisionMinZ = collisionMinZ;
         this.collisionMaxZ = collisionMaxZ;
+        this.alignToSlope = alignToSlope;
     }
 }

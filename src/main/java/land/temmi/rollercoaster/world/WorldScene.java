@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.badlogic.gdx.utils.Array;
@@ -25,6 +26,9 @@ public final class WorldScene implements Disposable {
     private final Array<BoundingBox> bounds = new Array<>();
     private final Vector3 cullCenter = new Vector3();
     private final Vector3 cullDimensions = new Vector3();
+    private final Vector3 slopeNormal = new Vector3();
+    private final Quaternion slopeRotation = new Quaternion();
+    private final TerrainSurface surface;
 
     public WorldScene(LoadedMap map, Array<Model> chunks, ModelCatalog modelCatalog) {
         if (map == null || chunks == null || modelCatalog == null) {
@@ -33,6 +37,7 @@ public final class WorldScene implements Disposable {
         this.map = map;
         this.chunks = chunks;
         this.modelCatalog = modelCatalog;
+        this.surface = new TerrainSurface(map.tiles);
         try {
             for (Model chunk : chunks) addInstance(new ModelInstance(chunk));
             for (MapProp prop : map.props) addProp(prop);
@@ -67,31 +72,70 @@ public final class WorldScene implements Disposable {
 
     private void addProp(MapProp prop) {
         ModelDefinition definition = modelCatalog.definition(prop.model);
-        validateCollision(prop, definition);
+        applyCollision(prop, definition);
         ModelInstance instance = new ModelInstance(modelCatalog.create(prop.model));
         float radians = prop.rotation * MathUtils.degreesToRadians;
-        float offsetX = definition.offsetX * definition.scale * MathUtils.cos(radians)
-            - definition.offsetZ * definition.scale * MathUtils.sin(radians);
-        float offsetZ = definition.offsetX * definition.scale * MathUtils.sin(radians)
-            + definition.offsetZ * definition.scale * MathUtils.cos(radians);
-        instance.transform.setToTranslation(prop.x + offsetX,
-            map.tiles.getHeight(MathUtils.floor(prop.x), MathUtils.floor(prop.z)) + prop.elevation + definition.offsetY,
-            prop.z + offsetZ)
-            .scale(definition.scale, definition.scale, definition.scale)
+        float cos = MathUtils.cos(radians);
+        float sin = MathUtils.sin(radians);
+        float offsetX = definition.offsetX * definition.scale * cos - definition.offsetZ * definition.scale * sin;
+        float offsetZ = definition.offsetX * definition.scale * sin + definition.offsetZ * definition.scale * cos;
+
+        // Prop coordinates are grid coordinates, so tile N's centre lies at world N - 0.5.
+        // Sampling there lets a prop on a ramp sit at the sloped surface instead of a tile step.
+        float worldX = prop.x + offsetX;
+        float worldZ = prop.z + offsetZ;
+        float groundY = surface.heightAt(prop.x - 0.5f, prop.z - 0.5f);
+        instance.transform.setToTranslation(worldX, groundY + prop.elevation + definition.offsetY, worldZ);
+        if (definition.alignToSlope) alignToSlope(instance, prop);
+        instance.transform.scale(definition.scale, definition.scale, definition.scale)
             .rotate(Vector3.Y, prop.rotation);
         addInstance(instance);
     }
 
-    private void validateCollision(MapProp prop, ModelDefinition definition) {
-        if (Math.abs(prop.rotation % 360f) > 0.001f) return;
-        for (int z = definition.collisionMinZ; z <= definition.collisionMaxZ; z++) {
-            for (int x = definition.collisionMinX; x <= definition.collisionMaxX; x++) {
-                int mapX = MathUtils.floor(prop.x) + x;
-                int mapZ = MathUtils.floor(prop.z) + z;
-                if (!map.tiles.isBlocked(mapX, mapZ)) {
-                    throw new IllegalStateException("Prop collision footprint is not blocked: " + definition.id
+    /** Tilts the prop so its up axis matches the terrain normal under the anchor tile. */
+    private void alignToSlope(ModelInstance instance, MapProp prop) {
+        TileShape shape = map.tiles.getShape(MathUtils.floor(prop.x), MathUtils.floor(prop.z));
+        if (!shape.isRamp()) return;
+        slopeNormal.set(-shape.slopeX, 1f, -shape.slopeZ).nor();
+        slopeRotation.setFromCross(Vector3.Y, slopeNormal);
+        instance.transform.rotate(slopeRotation);
+    }
+
+    /**
+     * Writes the model's footprint into the map's collision layer. The footprint belongs to the
+     * model, so a placement blocks its tiles automatically rather than relying on the map author
+     * having marked the same tiles by hand.
+     */
+    private void applyCollision(MapProp prop, ModelDefinition definition) {
+        int anchorX = MathUtils.floor(prop.x);
+        int anchorZ = MathUtils.floor(prop.z);
+        float radians = prop.rotation * MathUtils.degreesToRadians;
+        float cos = MathUtils.cos(radians);
+        float sin = MathUtils.sin(radians);
+
+        // Rotate the footprint corners and take their axis-aligned bounds: exact on 90 degree
+        // steps, conservative in between, and never silently skipped like an unrotated check.
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+        for (int corner = 0; corner < 4; corner++) {
+            float cx = (corner & 1) == 0 ? definition.collisionMinX : definition.collisionMaxX;
+            float cz = (corner & 2) == 0 ? definition.collisionMinZ : definition.collisionMaxZ;
+            float rx = cx * cos - cz * sin;
+            float rz = cx * sin + cz * cos;
+            minX = Math.min(minX, Math.round(rx));
+            maxX = Math.max(maxX, Math.round(rx));
+            minZ = Math.min(minZ, Math.round(rz));
+            maxZ = Math.max(maxZ, Math.round(rz));
+        }
+        for (int z = minZ; z <= maxZ; z++) {
+            for (int x = minX; x <= maxX; x++) {
+                int mapX = anchorX + x;
+                int mapZ = anchorZ + z;
+                if (!map.tiles.contains(mapX, mapZ)) {
+                    throw new IllegalStateException("Prop footprint leaves the map: " + definition.id
                         + " at " + mapX + "," + mapZ);
                 }
+                map.tiles.setBlocked(mapX, mapZ, true);
             }
         }
     }
