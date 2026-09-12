@@ -16,7 +16,8 @@ import com.badlogic.gdx.utils.Disposable;
 
 /** A camera-centred shadow map for the directional sun in a lighting environment. */
 public final class DirectionalShadowMap implements Disposable {
-    public static final int DEFAULT_SIZE = 1024;
+    /** Default shadow texture edge length. Override with the size constructor on memory-constrained devices. */
+    public static final int DEFAULT_SIZE = 2048;
 
     private final LightingEnvironment lighting;
     private final FrameBuffer target;

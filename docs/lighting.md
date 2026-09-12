@@ -7,7 +7,8 @@ colours/intensities on a 24-hour clock. Night ambient remains bright enough to n
 ## Sun shadows
 
 Create `DirectionalShadowMap(lighting, resolution)` on the GL thread, then pass it to
-`WorldShaderProvider(lighting, shadows)`. Before beginning the main framebuffer/ModelBatch:
+`WorldShaderProvider(lighting, shadows)`. The default map is 2048×2048; pass a smaller size to
+the constructor on memory-constrained devices. Before beginning the main framebuffer/ModelBatch:
 
 ```java
 shadows.render(focusPosition, worldScene.getInstances());
