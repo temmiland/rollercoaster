@@ -11,7 +11,7 @@ import land.temmi.rollercoaster.render.LowResTarget;
 
 public class RollercoasterGame extends ApplicationAdapter {
 
-    private static final int TEST_CELL = 20;
+    private static final float TARGET_TEST_CELL = 20f;
 
     private LowResTarget lowRes;
     private SpriteBatch blitBatch;
@@ -49,19 +49,27 @@ public class RollercoasterGame extends ApplicationAdapter {
         testProjection.setToOrtho2D(0, 0, width, height);
         shapes.setProjectionMatrix(testProjection);
 
+        // Cell size is derived from a column/row count, not a fixed pixel size, so
+        // cells always tile exactly - internalWidth/Height vary with device aspect
+        // and are rarely a multiple of any fixed cell size.
+        int cols = Math.max(1, Math.round(width / TARGET_TEST_CELL));
+        int rows = Math.max(1, Math.round(height / TARGET_TEST_CELL));
+        float cellW = width / (float) cols;
+        float cellH = height / (float) rows;
+
         shapes.begin(ShapeRenderer.ShapeType.Filled);
-        for (int y = 0; y < height; y += TEST_CELL) {
-            for (int x = 0; x < width; x += TEST_CELL) {
-                boolean even = ((x / TEST_CELL) + (y / TEST_CELL)) % 2 == 0;
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                boolean even = (col + row) % 2 == 0;
                 shapes.setColor(even ? Color.LIGHT_GRAY : Color.DARK_GRAY);
-                shapes.rect(x, y, TEST_CELL, TEST_CELL);
+                shapes.rect(col * cellW, row * cellH, cellW, cellH);
             }
         }
         // corner markers catch an accidental vertical/horizontal flip
         shapes.setColor(Color.CYAN);
-        shapes.rect(0, height - TEST_CELL, TEST_CELL, TEST_CELL);
+        shapes.rect(0, height - cellH, cellW, cellH);
         shapes.setColor(Color.MAGENTA);
-        shapes.rect(width - TEST_CELL, 0, TEST_CELL, TEST_CELL);
+        shapes.rect(width - cellW, 0, cellW, cellH);
         shapes.end();
 
         shapes.begin(ShapeRenderer.ShapeType.Line);
