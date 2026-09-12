@@ -25,11 +25,11 @@ public final class MapLoader {
         JsonValue heightLayer = layers.get("height");
         JsonValue collisionLayer = layers.get("collision");
         for (int z = 0; z < depth; z++) {
-            JsonValue tileRow = row(tileLayer, z, depth, "tile");
+            JsonValue tileRow = row(tileLayer, z, width, "tile");
             for (int x = 0; x < width; x++) {
                 String tileName = tileRow.getString(x);
-                float height = heightLayer == null ? 0f : row(heightLayer, z, depth, "height").getFloat(x);
-                boolean blocked = collisionLayer != null && row(collisionLayer, z, depth, "collision").getInt(x) != 0;
+                float height = heightLayer == null ? 0f : row(heightLayer, z, width, "height").getFloat(x);
+                boolean blocked = collisionLayer != null && row(collisionLayer, z, width, "collision").getInt(x) != 0;
                 map.set(x, z, tileset.get(tileName), height, blocked);
             }
         }
@@ -60,9 +60,10 @@ public final class MapLoader {
         return value.asString();
     }
 
-    private static JsonValue row(JsonValue layer, int index, int expected, String name) {
+    /** A layer row holds one cell per column, so {@code columns} is the map width. */
+    private static JsonValue row(JsonValue layer, int index, int columns, String name) {
         JsonValue value = layer.get(index);
-        if (value == null || !value.isArray() || value.size < expected) throw error(name + " layer has invalid row " + index);
+        if (value == null || !value.isArray() || value.size < columns) throw error(name + " layer has invalid row " + index);
         return value;
     }
 
