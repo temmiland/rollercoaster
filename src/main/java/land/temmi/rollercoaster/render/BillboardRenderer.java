@@ -53,6 +53,15 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     public void setWorldHeight(float worldHeight) { this.worldHeight = worldHeight; }
     public void setAspect(float aspect) { this.aspect = aspect; }
     public void setVisible(boolean visible) { this.visible = visible; }
+    public void setRegion(TextureRegion next) {
+        if (next == null || next.getTexture() != texture) throw new IllegalArgumentException("Region must belong to the billboard texture");
+        region.setRegion(next);
+        if (next.getRegionHeight() > 0) aspect = next.getRegionWidth() / (float) next.getRegionHeight();
+        mesh.setVertices(new float[] {-0.5f, -0.5f, 0f, region.getU(), region.getV(),
+            0.5f, -0.5f, 0f, region.getU2(), region.getV(),
+            0.5f, 0.5f, 0f, region.getU2(), region.getV2(),
+            -0.5f, 0.5f, 0f, region.getU(), region.getV2()});
+    }
 
     @Override
     public void getRenderables(Array<Renderable> renderables, Pool<Renderable> pool) {

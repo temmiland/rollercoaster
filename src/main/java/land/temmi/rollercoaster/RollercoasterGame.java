@@ -19,6 +19,10 @@ import land.temmi.rollercoaster.render.PixelCamera;
 import land.temmi.rollercoaster.render.WorldShaderProvider;
 import land.temmi.rollercoaster.render.BillboardRenderer;
 import land.temmi.rollercoaster.world.TestMap;
+import land.temmi.rollercoaster.actor.GridActor;
+import land.temmi.rollercoaster.actor.SpriteAnimation;
+import land.temmi.rollercoaster.input.InputSource;
+import land.temmi.rollercoaster.input.KeyboardInput;
 import com.badlogic.gdx.utils.Array;
 
 public class RollercoasterGame extends ApplicationAdapter {
@@ -37,6 +41,9 @@ public class RollercoasterGame extends ApplicationAdapter {
     private final Array<ModelInstance> world = new Array<>();
     private Texture spriteTexture;
     private BillboardRenderer playerSprite;
+    private GridActor player;
+    private InputSource input;
+    private SpriteAnimation playerAnimation;
     private final Vector3 subjectFootPosition = new Vector3(0f, 0f, 0f);
 
     @Override
@@ -54,20 +61,20 @@ public class RollercoasterGame extends ApplicationAdapter {
         chunks = TestMap.create();
         for (Model chunk : chunks) world.add(new ModelInstance(chunk));
 
-        Pixmap sprite = new Pixmap(16, 24, Pixmap.Format.RGBA8888);
-        sprite.setColor(0f, 0f, 0f, 0f);
-        sprite.fill();
-        sprite.setColor(0.95f, 0.55f, 0.15f, 1f);
-        sprite.fillRectangle(5, 15, 6, 7);
-        sprite.setColor(0.20f, 0.42f, 0.85f, 1f);
-        sprite.fillRectangle(4, 8, 8, 7);
-        sprite.setColor(0.15f, 0.20f, 0.32f, 1f);
-        sprite.fillRectangle(4, 3, 3, 5);
-        sprite.fillRectangle(9, 3, 3, 5);
+        Pixmap sprite = new Pixmap(32, 24, Pixmap.Format.RGBA8888);
+        paintSprite(sprite, 0, false);
+        paintSprite(sprite, 16, true);
         spriteTexture = new Texture(sprite);
         sprite.dispose();
         spriteTexture.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
-        playerSprite = new BillboardRenderer(spriteTexture, new TextureRegion(spriteTexture), SUBJECT_WORLD_HEIGHT);
+        TextureRegion frameA = new TextureRegion(spriteTexture, 0, 0, 16, 24);
+        TextureRegion frameB = new TextureRegion(spriteTexture, 16, 0, 16, 24);
+        playerSprite = new BillboardRenderer(spriteTexture, frameA, SUBJECT_WORLD_HEIGHT);
+        playerAnimation = new SpriteAnimation(0.14f, frameA, frameB);
+        player = new GridActor(24, 24, 5f);
+        player.setTile(12, 14);
+        player.setTileAccess((x, z) -> !(x >= 7 && x <= 10 && z >= 9 && z <= 12));
+        input = new KeyboardInput();
     }
 
     @Override
@@ -76,13 +83,14 @@ public class RollercoasterGame extends ApplicationAdapter {
         pixelCamera.resize(lowRes.getWidth(), lowRes.getHeight());
     }
 
-    private float driftTime;
-
     @Override
     public void render() {
-        // Bounded drift keeps the map visible while exercising camera snapping.
-        driftTime += Gdx.graphics.getDeltaTime();
-        subjectFootPosition.set(12f + (float) Math.sin(driftTime * 0.15f) * 2f, 0f, 14f);
+        float delta = Gdx.graphics.getDeltaTime();
+        player.update(delta, input.pollMove());
+        playerAnimation.setPlaying(player.isMoving());
+        playerAnimation.update(delta);
+        playerSprite.setRegion(playerAnimation.getFrame());
+        subjectFootPosition.set(player.getPosition());
 
         pixelCamera.follow(subjectFootPosition, SUBJECT_WORLD_HEIGHT, SUBJECT_PIXEL_HEIGHT);
         pixelCamera.snapToPixelGrid(lowRes.getWidth(), lowRes.getHeight());
@@ -102,6 +110,18 @@ public class RollercoasterGame extends ApplicationAdapter {
         lowRes.end();
 
         lowRes.blitToScreen(blitBatch);
+    }
+
+    private static void paintSprite(Pixmap sprite, int offsetX, boolean alternate) {
+        sprite.setColor(0f, 0f, 0f, 0f);
+        sprite.fillRectangle(offsetX, 0, 16, 24);
+        sprite.setColor(0.95f, 0.55f, 0.15f, 1f);
+        sprite.fillRectangle(offsetX + 5, 15, 6, 7);
+        sprite.setColor(0.20f, 0.42f, 0.85f, 1f);
+        sprite.fillRectangle(offsetX + 4, 8, 8, 7);
+        sprite.setColor(0.15f, 0.20f, 0.32f, 1f);
+        sprite.fillRectangle(offsetX + (alternate ? 3 : 4), 3, 3, 5);
+        sprite.fillRectangle(offsetX + (alternate ? 10 : 9), 3, 3, 5);
     }
 
     // Horizontal ticks every 10px (brighter every 50px), so a screenshot's rendered
