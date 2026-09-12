@@ -54,8 +54,8 @@ vec3 lightFactor() {
 #ifdef directionalShadow
     sunVisibility = shadowVisibility();
 #endif
-    result += u_sunLight.rgb * u_sunLight.a * sunVisibility
-        * max(dot(normal, normalize(u_sunDirection)), 0.0);
+    float sunFacing = smoothstep(0.0, 0.35, dot(normal, normalize(u_sunDirection)));
+    result += u_sunLight.rgb * u_sunLight.a * sunVisibility * sunFacing;
     for (int i = 0; i < 8; i++) {
         if (i >= u_pointCount) break;
         vec3 toLight = u_pointPosition[i] - v_worldPosition;
@@ -67,7 +67,8 @@ vec3 lightFactor() {
             float angle = dot(-toLight / max(distanceToLight, 0.0001), normalize(u_pointDirection[i]));
             cone = smoothstep(u_pointParams[i].w, u_pointParams[i].z, angle);
         }
-        float facing = max(dot(normal, toLight / max(distanceToLight, 0.0001)), 0.0);
+        float facing = smoothstep(0.0, 0.35,
+            dot(normal, toLight / max(distanceToLight, 0.0001)));
         result += u_pointLight[i].rgb * u_pointLight[i].a * attenuation
             * cone * facing;
     }
