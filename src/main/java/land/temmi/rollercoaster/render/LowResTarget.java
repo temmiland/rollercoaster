@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.Disposable;
+import com.badlogic.gdx.utils.GdxRuntimeException;
 
 public class LowResTarget implements Disposable {
 
@@ -70,18 +71,29 @@ public class LowResTarget implements Disposable {
             sourceFbo.dispose();
         }
 
-        FrameBuffer.FrameBufferBuilder builder = new FrameBuffer.FrameBufferBuilder(internalWidth, internalHeight);
-        builder.addBasicColorTextureAttachment(Pixmap.Format.RGB888);
-        // GL_DEPTH_COMPONENT16 is the only depth format GLES2 guarantees; use 24-bit where GL30 is available.
-        if (Gdx.graphics.isGL30Available()) {
-            builder.addDepthRenderBuffer(GL30.GL_DEPTH_COMPONENT24);
+        // 24-bit depth is worth asking for even without GL30: desktop GL2.1 and any GLES2 driver
+        // with OES_depth24 accept it, and 16-bit visibly z-fights along coplanar tile edges.
+        // GLES2 only guarantees GL_DEPTH_COMPONENT16, so fall back when the format is rejected.
+        sourceFbo = buildSource(GL30.GL_DEPTH_COMPONENT24);
+        if (sourceFbo != null) {
             depthBits = 24;
         } else {
+            sourceFbo = buildSource(GL20.GL_DEPTH_COMPONENT16);
             depthBits = 16;
-            builder.addBasicDepthRenderBuffer();
+            if (sourceFbo == null) throw new GdxRuntimeException("No usable depth format for the low-res target");
         }
-        sourceFbo = builder.build();
         bindSourceTexture();
+    }
+
+    private FrameBuffer buildSource(int depthFormat) {
+        FrameBuffer.FrameBufferBuilder builder = new FrameBuffer.FrameBufferBuilder(internalWidth, internalHeight);
+        builder.addBasicColorTextureAttachment(Pixmap.Format.RGB888);
+        builder.addDepthRenderBuffer(depthFormat);
+        try {
+            return builder.build();
+        } catch (RuntimeException unsupported) {
+            return null;
+        }
     }
 
     /**
