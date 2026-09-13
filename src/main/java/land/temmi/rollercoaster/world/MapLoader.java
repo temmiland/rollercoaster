@@ -87,7 +87,16 @@ public final class MapLoader {
                 light.getFloat("intensity", 1f), light.getFloat("range", 4f), light.getBoolean("enabled", true),
                 spot, dirX, dirY, dirZ, light.getFloat("innerAngle", 0f), light.getFloat("outerAngle", 0f)));
         }
-        return new LoadedMap(name, map, props, entities, lights);
+        Array<MapTransition> transitions = new Array<>();
+        JsonValue transitionArray = root.get("transitions");
+        if (transitionArray != null) {
+            for (JsonValue transition = transitionArray.child; transition != null; transition = transition.next) {
+                transitions.add(new MapTransition(requiredString(transition, "id"), transition.getInt("x"),
+                    transition.getInt("y", 0), requiredString(transition, "targetMap"),
+                    transition.getInt("targetX"), transition.getInt("targetY", 0)));
+            }
+        }
+        return new LoadedMap(name, map, props, entities, lights, transitions);
     }
 
     private static JsonValue required(JsonValue parent, String key) {
