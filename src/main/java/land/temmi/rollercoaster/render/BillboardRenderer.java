@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Renderable;
 import com.badlogic.gdx.graphics.g3d.RenderableProvider;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
@@ -26,6 +27,9 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     private final Texture texture;
     private final TextureRegion region;
     private final Vector3 center = new Vector3();
+    private final Vector3 up = new Vector3(Vector3.Y);
+    private final Vector3 right = new Vector3(Vector3.X);
+    private final Vector3 anchor = new Vector3();
     private float worldHeight;
     private float aspect = 0.75f;
     private float bottomPadding;
@@ -49,6 +53,19 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     public Vector3 getPosition() { return center; }
     public void setWorldHeight(float worldHeight) { this.worldHeight = worldHeight; }
     public void setAspect(float aspect) { this.aspect = aspect; }
+
+    /**
+     * Axes the quad spans, normally the camera's own right and up. A room whose walking plane
+     * turns passes axes rolled in the image plane instead, which stands the sprite on that plane.
+     */
+    public void setBasis(Vector3 right, Vector3 up) {
+        if (right == null || up == null || right.len2() < 0.000001f || up.len2() < 0.000001f) {
+            throw new IllegalArgumentException("Billboard axes are required");
+        }
+        this.right.set(right).nor();
+        this.up.set(up).nor();
+    }
+
     public void setBottomPadding(float fraction) {
         if (fraction < 0f || fraction >= 1f) throw new IllegalArgumentException("Invalid billboard bottom padding");
         bottomPadding = fraction;
@@ -85,8 +102,18 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
         renderable.meshPart.set(quad.meshPart);
         renderable.material = material;
         renderable.userData = TAG;
-        renderable.worldTransform.setToTranslation(center.x, center.y - worldHeight * bottomPadding, center.z);
-        renderable.worldTransform.scl(worldHeight * aspect, worldHeight, 1f);
+        // The quad's axes travel in the transform itself, so each sprite can stand on its own plane.
+        anchor.set(center).mulAdd(up, -worldHeight * bottomPadding);
+        float[] m = renderable.worldTransform.idt().val;
+        m[Matrix4.M00] = right.x * worldHeight * aspect;
+        m[Matrix4.M10] = right.y * worldHeight * aspect;
+        m[Matrix4.M20] = right.z * worldHeight * aspect;
+        m[Matrix4.M01] = up.x * worldHeight;
+        m[Matrix4.M11] = up.y * worldHeight;
+        m[Matrix4.M21] = up.z * worldHeight;
+        m[Matrix4.M03] = anchor.x;
+        m[Matrix4.M13] = anchor.y;
+        m[Matrix4.M23] = anchor.z;
         renderables.add(renderable);
     }
 

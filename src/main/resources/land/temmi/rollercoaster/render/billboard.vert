@@ -3,8 +3,6 @@ attribute vec2 a_texCoord0;
 uniform mat4 u_projViewTrans;
 uniform mat4 u_worldTrans;
 uniform vec2 u_targetSize;
-uniform vec3 u_billboardRight;
-uniform float u_heightScale;
 uniform vec4 u_uvTransform;
 varying vec2 v_uv;
 varying vec3 v_worldPosition;
@@ -15,13 +13,14 @@ varying vec4 v_shadowPosition;
 #endif
 
 void main() {
+    // Columns 0 and 1 carry the quad's own axes, already scaled: a sprite standing on a turned
+    // walking plane is rotated there rather than following the camera's axes blindly.
+    vec3 right = u_worldTrans[0].xyz;
+    vec3 up = u_worldTrans[1].xyz;
     vec3 center = u_worldTrans[3].xyz;
-    float width = length(u_worldTrans[0].xyz);
-    float height = length(u_worldTrans[1].xyz);
-    vec3 worldPosition = center + u_billboardRight * a_position.x * width
-        + vec3(0.0, (a_position.y + 0.5) * height * u_heightScale, 0.0);
+    vec3 worldPosition = center + right * a_position.x + up * (a_position.y + 0.5);
     v_worldPosition = worldPosition;
-    v_normal = normalize(cross(vec3(0.0, 1.0, 0.0), u_billboardRight));
+    v_normal = normalize(cross(up, right));
 #ifdef directionalShadow
     v_shadowPosition = u_shadowMatrix * vec4(worldPosition, 1.0);
 #endif
