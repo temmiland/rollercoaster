@@ -55,7 +55,7 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     public void setAspect(float aspect) { this.aspect = aspect; }
 
     /**
-     * Axes the quad spans, normally the camera's own right and up. A room whose walking plane
+     * Axes the quad spans, normally the camera's own right and up. A folded map whose walking plane
      * turns passes axes rolled in the image plane instead, which stands the sprite on that plane.
      */
     public void setBasis(Vector3 right, Vector3 up) {

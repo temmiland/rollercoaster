@@ -8,21 +8,21 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Disposable;
 import land.temmi.rollercoaster.asset.ModelCatalog;
 
-/** Ordinary terrain/prop scenes rigidly placed on the room's authored walking planes. */
-public final class SurfaceRoomScene implements Disposable {
+/** Ordinary terrain/prop scenes rigidly placed on the folded map's authored walking planes. */
+public final class FoldedMapScene implements Disposable {
     private final Array<WorldScene> scenes = new Array<>();
     private final Array<ModelInstance> visible = new Array<>();
     private final Array<ModelInstance> all = new Array<>();
 
-    public SurfaceRoomScene(SurfaceRoom room, Material material, ModelCatalog catalog, float borderDepth) {
-        if (room == null || material == null) throw new IllegalArgumentException("Room and material are required");
+    public FoldedMapScene(FoldedMap map, Material material, ModelCatalog catalog, float borderDepth) {
+        if (map == null || material == null) throw new IllegalArgumentException("Map and material are required");
         Matrix4 placement = new Matrix4();
         try {
-            for (SurfacePlatform platform : room.platforms()) {
-                WorldScene scene = new WorldScene(platform.map,
-                    new ChunkMesher().setBorderDepth(borderDepth).build(platform.map.tiles, material), catalog);
+            for (MapPlane plane : map.planes()) {
+                WorldScene scene = new WorldScene(plane.map,
+                    new ChunkMesher().setBorderDepth(borderDepth).build(plane.map.tiles, material), catalog);
                 scenes.add(scene);
-                scene.applyTransform(platform.transform(placement));
+                scene.applyTransform(plane.transform(placement));
                 all.addAll(scene.getInstances());
             }
         } catch (RuntimeException error) {

@@ -7,60 +7,64 @@ import com.badlogic.gdx.utils.JsonValue;
 import land.temmi.rollercoaster.input.MoveIntent;
 
 /**
- * Reads a room folded out of walking planes from one document.
+ * Reads a map folded out of walking planes from one document.
  *
- * <p>Every plane is an ordinary map with a gravity state and the room tile its local (0, 0) sits
+ * <p>Every plane is an ordinary map with a gravity state and the world tile its local (0, 0) sits
  * on, so plane content is authored, textured and populated with props exactly like the ground of
- * any other map. Seams carry a step and a count because the corners of a room repeat along the
+ * any other map. Crossings carry a step and a count because the corners of a map repeat along the
  * axis the planes share.
  */
-public final class SurfaceRoomLoader {
+public final class FoldedMapLoader {
     public static final int CURRENT_VERSION = 1;
 
     private final MapLoader mapLoader;
 
-    public SurfaceRoomLoader() {
+    public FoldedMapLoader() {
         this(new MapLoader());
     }
 
-    public SurfaceRoomLoader(MapLoader mapLoader) {
+    public FoldedMapLoader(MapLoader mapLoader) {
         if (mapLoader == null) throw new IllegalArgumentException("Map loader is required");
         this.mapLoader = mapLoader;
     }
 
-    public SurfaceRoom load(FileHandle file, Tileset tileset) {
-        if (file == null || tileset == null) throw new IllegalArgumentException("Room file and tileset are required");
+    public FoldedMap load(FileHandle file, Tileset tileset) {
+        if (file == null || tileset == null) throw new IllegalArgumentException("Map file and tileset are required");
         JsonValue root = new JsonReader().parse(file);
         int version = root.getInt("version", CURRENT_VERSION);
         if (version != CURRENT_VERSION) throw error("Unsupported version: " + version);
 
-        SurfaceRoom room = new SurfaceRoom();
-        if (root.has("seamArc")) room.setSeamArcHeight(root.getFloat("seamArc"));
+        FoldedMap map = new FoldedMap();
+        if (root.has("crossingArc")) map.setCrossingArcHeight(root.getFloat("crossingArc"));
 
         JsonValue planes = required(root, "planes");
         for (JsonValue plane = planes.child; plane != null; plane = plane.next) {
             Vector3 origin = tile(required(plane, "origin"), "origin");
-            room.add(new SurfacePlatform(requiredString(plane, "name"),
+            map.add(new MapPlane(requiredString(plane, "name"),
                 gravity(requiredString(plane, "gravity")), mapLoader.parse(plane, tileset),
                 Math.round(origin.x), Math.round(origin.y), Math.round(origin.z)));
         }
 
-        JsonValue seams = root.get("seams");
-        if (seams != null) for (JsonValue seam = seams.child; seam != null; seam = seam.next) addSeam(room, seam);
-        return room;
+        JsonValue crossings = root.get("crossings");
+        if (crossings != null) {
+            for (JsonValue crossing = crossings.child; crossing != null; crossing = crossing.next) {
+                addCrossing(map, crossing);
+            }
+        }
+        return map;
     }
 
-    private void addSeam(SurfaceRoom room, JsonValue seam) {
-        Vector3 from = tile(required(seam, "from"), "from");
-        Vector3 to = tile(required(seam, "to"), "to");
-        MoveIntent fromInput = input(requiredString(seam, "fromInput"));
-        MoveIntent toInput = input(requiredString(seam, "toInput"));
-        int count = seam.getInt("count", 1);
-        if (count < 1) throw error("Seam count must be positive");
-        Vector3 step = seam.has("step") ? tile(seam.get("step"), "step") : new Vector3();
-        if (count > 1 && step.isZero()) throw error("A repeated seam needs a step");
+    private void addCrossing(FoldedMap map, JsonValue crossing) {
+        Vector3 from = tile(required(crossing, "from"), "from");
+        Vector3 to = tile(required(crossing, "to"), "to");
+        MoveIntent fromInput = input(requiredString(crossing, "fromInput"));
+        MoveIntent toInput = input(requiredString(crossing, "toInput"));
+        int count = crossing.getInt("count", 1);
+        if (count < 1) throw error("Crossing count must be positive");
+        Vector3 step = crossing.has("step") ? tile(crossing.get("step"), "step") : new Vector3();
+        if (count > 1 && step.isZero()) throw error("A repeated crossing needs a step");
         for (int i = 0; i < count; i++) {
-            room.seam(from, fromInput, to, toInput);
+            map.crossing(from, fromInput, to, toInput);
             from.add(step);
             to.add(step);
         }
@@ -100,6 +104,6 @@ public final class SurfaceRoomLoader {
     }
 
     private static IllegalArgumentException error(String message) {
-        return new IllegalArgumentException("Invalid surface room: " + message);
+        return new IllegalArgumentException("Invalid folded map: " + message);
     }
 }

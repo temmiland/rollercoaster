@@ -58,7 +58,7 @@ public final class WorldScene implements Disposable {
     public LoadedMap getMap() { return map; }
     public Array<ModelInstance> getInstances() { return instances; }
 
-    /** Places a scene in a room; updates the same bounds used by ordinary frustum culling. */
+    /** Places a scene on a walking plane; updates the same bounds used by ordinary frustum culling. */
     public void applyTransform(Matrix4 transform) {
         for (int i = 0; i < instances.size; i++) {
             ModelInstance instance = instances.get(i);

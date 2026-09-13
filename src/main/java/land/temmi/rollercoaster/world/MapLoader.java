@@ -19,7 +19,7 @@ public final class MapLoader {
 
     /**
      * Reads a map out of an already parsed document, so a document that holds several maps - a
-     * room folded out of walking planes, say - can carry them inline rather than by file name.
+     * map folded out of walking planes, say - can carry them inline rather than by file name.
      */
     public LoadedMap parse(JsonValue root, Tileset tileset) {
         if (root == null || tileset == null) throw new IllegalArgumentException("Map data and tileset are required");

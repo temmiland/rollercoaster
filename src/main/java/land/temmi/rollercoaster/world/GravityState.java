@@ -4,9 +4,9 @@ import com.badlogic.gdx.math.Vector3;
 import land.temmi.rollercoaster.input.MoveIntent;
 
 /**
- * One of the four walking planes of a folded room.
+ * One of the four walking planes of a folded map.
  *
- * <p>A room keeps a single fixed X/Y/Z grid; the state only decides which world axes the four
+ * <p>A folded map keeps a single fixed X/Y/Z grid; the state only decides which world axes the four
  * screen-relative inputs move along. Walls are the two states that leave X fixed and make Y
  * walkable. There is no force, no fall and no simulation.
  */
@@ -29,7 +29,7 @@ public enum GravityState {
         rz = fx * ny - fy * nx;
     }
 
-    /** Points out of the surface, away from the room: the direction the camera treats as up. */
+    /** Points out of the surface, away from the walking planes: the direction the camera treats as up. */
     public Vector3 normal(Vector3 out) { return out.set(nx, ny, nz); }
 
     /** World step of {@link MoveIntent#UP}, which is always away from the viewer on screen. */

@@ -56,7 +56,7 @@ public class PixelCamera {
 
     /**
      * Follows a subject with an explicit camera basis. The regular game camera uses the overload
-     * above; gravity surfaces use this form to look at a platform from its underside while
+     * above; a folded map uses this form to look at a plane from its free side while
      * retaining the same perspective distance and pixel-centering behavior.
      */
     public void follow(Vector3 footPosition, float subjectWorldHeight, float subjectPixelHeight,

@@ -1,6 +1,6 @@
-# Surface rooms
+# Folded maps
 
-A surface room is a room folded out of several walking planes that share one fixed X/Y/Z tile
+A folded map is a map folded out of several walking planes that share one fixed X/Y/Z tile
 grid. It lets an actor walk on a wall or a ceiling without a second coordinate system, a physics
 step, or a separate renderer.
 
@@ -10,35 +10,35 @@ step, or a separate renderer.
   integer axes: the surface normal, the world step of `MoveIntent.UP`, and the world step of
   `MoveIntent.RIGHT`, derived as `forward × normal` so every state is a proper rotation of the
   ground. Walls are the only states that walk along Y; ground and ceiling never change altitude.
-- `SurfacePlatform` — an ordinary `LoadedMap` placed as one plane. Its own tile map, terrain
+- `MapPlane` — an ordinary `LoadedMap` placed as one plane. Its own tile map, terrain
   heights and collision stay authoritative; only the placement rotates. Local X follows the plane's
   right axis and local Z its backward axis, so a map authored for the ground reads the same way on
   a wall and is never mirrored.
-- `SurfaceRoom` — the platforms plus the seams between them. It implements
+- `FoldedMap` — the planes plus the crossings between them. It implements
   `GridActor.MovementSpace`, so an actor keeps its usual speed, input cadence and walk animation.
-- `SurfaceRoomScene` — builds each plane's geometry with the normal `ChunkMesher` and places it.
-- `SurfaceRoomLoader` — reads a whole room from one document, see below.
-- `SurfaceCamera` — the framing, see below.
+- `FoldedMapScene` — builds each plane's geometry with the normal `ChunkMesher` and places it.
+- `FoldedMapLoader` — reads a whole map from one document, see below.
+- `PlaneCamera` — the framing, see below.
 
 ## The document
 
-A room is authored in a single JSON file. Each entry of `planes` is an ordinary map document —
+A folded map is authored in a single JSON file. Each entry of `planes` is an ordinary map document —
 `name`, `size`, `layers`, `props`, `entities` — plus the two fields that place it: its `gravity`
-(`floor`, `westWall`, `eastWall`, `ceiling`) and the `origin` room tile its local (0, 0) sits on.
+(`floor`, `westWall`, `eastWall`, `ceiling`) and the `origin` world tile its local (0, 0) sits on.
 Props and entities therefore work on a wall exactly as they do on the ground: a prop's footprint
-becomes collision on the plane it stands on, and a room's markers — where the player arrives,
-where it leads out — are map entities, read back with `SurfaceRoom.entityTile`.
+becomes collision on the plane it stands on, and a map's markers — where the player arrives,
+where it leads out — are map entities, read back with `FoldedMap.entityTile`.
 
-Seams carry `from`/`to` room tiles and the input that crosses in each direction, plus an optional
-`step` and `count`, because the corners of a room repeat along the axis its planes share.
+Crossings carry `from`/`to` world tiles and the input that crosses in each direction, plus an optional
+`step` and `count`, because the corners of a map repeat along the axis its planes share.
 
-## Seams
+## Crossings
 
 Walking inside a plane is the plane's own business. Crossing to another one is the only place
-gravity changes, and it happens where the planes touch or across an authored seam where they do
+gravity changes, and it happens where the planes touch or across an authored crossing where they do
 not.
 
-Seams have to be authored in both directions, and that is not an oversight: the step that leaves a
+Crossings have to be authored in both directions, and that is not an oversight: the step that leaves a
 plane points along the normal the actor is about to gain, and no input maps to a plane's own
 normal. So leaving the ground westwards is a `LEFT`, while coming back down the wall is a `DOWN`.
 
@@ -47,7 +47,7 @@ instead of dragging the actor through it, and reads as a hop when the planes sta
 
 ## Framing
 
-`SurfaceCamera` keeps the world's up axis and never rolls — pillars stay vertical on screen no
+`PlaneCamera` keeps the world's up axis and never rolls — pillars stay vertical on screen no
 matter which plane is walked on. Two things change instead:
 
 - **Where it looks from.** The camera always moves to the free side of the current plane, so a

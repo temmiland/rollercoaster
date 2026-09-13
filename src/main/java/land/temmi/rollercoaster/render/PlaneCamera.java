@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 
 /**
- * Camera orientation for a room whose walking plane can change.
+ * Camera orientation for a folded map whose walking plane can change.
  *
  * <p>The camera keeps the world's up axis and never rolls: pillars stay vertical on screen no
  * matter which plane the player walks on. What changes is where it looks from - it always moves to
@@ -16,7 +16,7 @@ import com.badlogic.gdx.math.Vector3;
  * <p>Each plane's own right axis is what the framing is built from, which is what keeps the
  * controls honest: the right-hand input always moves the player right across the screen.
  */
-public final class SurfaceCamera {
+public final class PlaneCamera {
     /** The heading the ordinary field camera looks along; walls are swung half way off it. */
     private static final Vector3 DEFAULT_HEADING = new Vector3(0f, 0f, -1f);
 
@@ -37,14 +37,14 @@ public final class SurfaceCamera {
     private float elapsed;
     private boolean blending;
 
-    /** Matches the pitch of the ordinary field camera so both rooms frame a subject alike. */
-    public SurfaceCamera setPitch(float pitchDegrees) {
+    /** Matches the pitch of the ordinary field camera so both kinds of map frame a subject alike. */
+    public PlaneCamera setPitch(float pitchDegrees) {
         if (pitchDegrees <= 0f || pitchDegrees >= 90f) throw new IllegalArgumentException("Pitch must lie between 0 and 90 degrees");
         this.pitchDegrees = pitchDegrees;
         return this;
     }
 
-    public SurfaceCamera setBlendSeconds(float blendSeconds) {
+    public PlaneCamera setBlendSeconds(float blendSeconds) {
         if (blendSeconds <= 0f) throw new IllegalArgumentException("Blend duration must be positive");
         this.blendSeconds = blendSeconds;
         return this;
@@ -134,7 +134,7 @@ public final class SurfaceCamera {
         // Looking against the plane's right axis puts screen right on it, whatever the plane is.
         horizontal.set(planeRight).crs(Vector3.Y).nor().scl(-1f);
         // A wall is only swung half way onto its face. Facing it squarely would stand the sprite
-        // back up and flatten the room; half way keeps the ordinary heading and lays the sprite
+        // back up and flatten the view; half way keeps the ordinary heading and lays the sprite
         // on its side, while the climbing axis still runs straight up the screen.
         heading.set(horizontal).add(DEFAULT_HEADING);
         if (heading.len2() > 0.0001f) horizontal.set(heading).nor();
