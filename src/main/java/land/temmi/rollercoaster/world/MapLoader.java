@@ -4,6 +4,11 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
+import java.util.Locale;
+import land.temmi.rollercoaster.event.Action;
+import land.temmi.rollercoaster.event.Condition;
+import land.temmi.rollercoaster.event.EventTrigger;
+import land.temmi.rollercoaster.event.GameEvent;
 
 /** Manual JSON parser kept reflection-free for RoboVM. */
 public final class MapLoader {
@@ -96,7 +101,56 @@ public final class MapLoader {
                     transition.getInt("targetX"), transition.getInt("targetY", 0)));
             }
         }
-        return new LoadedMap(name, map, props, entities, lights, transitions);
+        Array<GameEvent> events = new Array<>();
+        JsonValue eventArray = root.get("events");
+        if (eventArray != null) {
+            for (JsonValue event = eventArray.child; event != null; event = event.next) {
+                EventTrigger trigger = readTrigger(required(event, "trigger"));
+                Array<Condition> conditions = readConditions(event);
+                Array<Action> actions = new Array<>();
+                JsonValue actionArray = required(event, "actions");
+                if (!actionArray.isArray()) throw error("actions must be an array");
+                for (JsonValue action = actionArray.child; action != null; action = action.next) {
+                    actions.add(readAction(action));
+                }
+                events.add(new GameEvent(requiredString(event, "id"), trigger, conditions, actions));
+            }
+        }
+        return new LoadedMap(name, map, props, entities, lights, transitions, events);
+    }
+
+    private static EventTrigger readTrigger(JsonValue trigger) {
+        EventTrigger.Type type = EventTrigger.Type.valueOf(requiredString(trigger, "type").toUpperCase(Locale.ROOT));
+        String entityId = trigger.getString("entityId", null);
+        int x = trigger.getInt("x", 0);
+        int z = trigger.getInt("y", 0);
+        String timeOfDay = trigger.getString("timeOfDay", null);
+        return new EventTrigger(type, entityId, x, z, timeOfDay);
+    }
+
+    private static Action readAction(JsonValue action) {
+        Action.Type type = Action.Type.valueOf(requiredString(action, "type").toUpperCase(Locale.ROOT));
+        String targetId = action.getString("targetId", null);
+        String value = action.getString("value", null);
+        int x = action.getInt("x", 0);
+        int z = action.getInt("y", 0);
+        String targetMap = action.getString("targetMap", null);
+        return new Action(type, targetId, value, x, z, targetMap);
+    }
+
+    private static Array<Condition> readConditions(JsonValue parent) {
+        Array<Condition> conditions = new Array<>();
+        JsonValue conditionArray = parent.get("conditions");
+        if (conditionArray != null) {
+            for (JsonValue condition = conditionArray.child; condition != null; condition = condition.next) {
+                Condition.Type type = Condition.Type.valueOf(requiredString(condition, "type").toUpperCase(Locale.ROOT));
+                Condition.Comparison comparison = Condition.Comparison.valueOf(
+                    condition.getString("comparison", "EQUALS").toUpperCase(Locale.ROOT));
+                conditions.add(new Condition(type, requiredString(condition, "key"), comparison,
+                    requiredString(condition, "value")));
+            }
+        }
+        return conditions;
     }
 
     private static JsonValue required(JsonValue parent, String key) {
