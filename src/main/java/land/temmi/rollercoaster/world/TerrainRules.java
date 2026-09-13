@@ -78,6 +78,11 @@ public final class TerrainRules implements GridActor.TileAccess {
         return map.contains(x, z) ? surface.heightAtCenter(x, z, currentHeight) : 0f;
     }
 
+    @Override
+    public float heightAtWorld(float worldX, float worldZ, float currentHeight) {
+        return surface.heightAt(worldX, worldZ);
+    }
+
     private Step step(int fromX, int fromZ, int dx, int dz, float currentHeight) {
         int toX = fromX + dx;
         int toZ = fromZ + dz;

@@ -37,6 +37,11 @@ public final class GridActor {
         /** World-Y of the surface nearest the actor's current level at that tile's centre. */
         default float heightAt(int x, int z, float currentHeight) { return heightAt(x, z); }
 
+        /** Surface height at the actor's actual world position while a step crosses a tile. */
+        default float heightAtWorld(float worldX, float worldZ, float currentHeight) {
+            return heightAt((int) Math.floor(worldX) + 1, (int) Math.floor(worldZ) + 1, currentHeight);
+        }
+
         /** Whether a step is allowed while staying near the actor's current level. */
         default boolean canStep(int fromX, int fromZ, int dx, int dz, float currentHeight) {
             return canStep(fromX, fromZ, dx, dz);
@@ -116,15 +121,15 @@ public final class GridActor {
         }
         if (moving) {
             progress = Math.min(1f, progress + Math.max(0f, delta) * speed);
-            float fromY = heightAt(tileX, tileZ, position.y);
-            float toY = heightAt(targetX, targetZ, position.y);
-            position.set(tileX + (targetX - tileX) * progress + WORLD_OFFSET_X,
-                fromY + (toY - fromY) * progress,
-                tileZ + (targetZ - tileZ) * progress + WORLD_OFFSET_Z);
+            float worldX = tileX + (targetX - tileX) * progress + WORLD_OFFSET_X;
+            float worldZ = tileZ + (targetZ - tileZ) * progress + WORLD_OFFSET_Z;
+            position.set(worldX, heightAtWorld(worldX, worldZ, position.y), worldZ);
             if (progress >= 1f) {
                 tileX = targetX;
                 tileZ = targetZ;
-                position.set(tileX + WORLD_OFFSET_X, heightAt(tileX, tileZ, position.y), tileZ + WORLD_OFFSET_Z);
+                worldX = tileX + WORLD_OFFSET_X;
+                worldZ = tileZ + WORLD_OFFSET_Z;
+                position.set(worldX, heightAtWorld(worldX, worldZ, position.y), worldZ);
                 moving = false;
                 stepped = true;
             }
@@ -171,6 +176,9 @@ public final class GridActor {
     private float heightAt(int x, int z) { return tileAccess == null ? 0f : tileAccess.heightAt(x, z); }
     private float heightAt(int x, int z, float currentHeight) {
         return tileAccess == null ? 0f : tileAccess.heightAt(x, z, currentHeight);
+    }
+    private float heightAtWorld(float worldX, float worldZ, float currentHeight) {
+        return tileAccess == null ? 0f : tileAccess.heightAtWorld(worldX, worldZ, currentHeight);
     }
     private boolean inside(int x, int z) { return x >= 0 && x < width && z >= 0 && z < depth; }
     public Vector3 getPosition() { return position; }
