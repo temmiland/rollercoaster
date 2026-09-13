@@ -69,7 +69,7 @@ public final class MapLoader {
         Array<MapEntity> entities = new Array<>();
         JsonValue entityArray = root.get("entities");
         if (entityArray != null) for (JsonValue entity = entityArray.child; entity != null; entity = entity.next) {
-            entities.add(new MapEntity(requiredString(entity, "type"), entity.getString("sprite", null),
+            entities.add(new MapEntity(entity.getString("id", null), requiredString(entity, "type"), entity.getString("sprite", null),
                 entity.getInt("x"), entity.getInt("y", 0)));
         }
         return new LoadedMap(name, map, props, entities);
