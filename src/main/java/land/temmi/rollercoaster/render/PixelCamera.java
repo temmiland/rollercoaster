@@ -14,6 +14,7 @@ public class PixelCamera {
 
     private final Vector3 billboardCenter = new Vector3();
     private final Vector3 right = new Vector3();
+    private final Vector3 defaultDirection = new Vector3();
 
     private float fovDegrees = 30f;
     private float pitchDegrees = 45f;
@@ -27,6 +28,9 @@ public class PixelCamera {
     public void setPitch(float pitchDegrees) {
         this.pitchDegrees = pitchDegrees;
     }
+
+    /** Screen right axis of the last {@link #follow}, for placing camera-facing sprites. */
+    public Vector3 right(Vector3 out) { return out.set(right); }
 
     public float getFovDegrees() { return fovDegrees; }
     public float getPitchDegrees() { return pitchDegrees; }
@@ -44,17 +48,29 @@ public class PixelCamera {
      * world units tall, renders at exactly {@code subjectPixelHeight} pixels tall at screen centre.
      */
     public void follow(Vector3 footPosition, float subjectWorldHeight, float subjectPixelHeight) {
+        float pitchRad = pitchDegrees * MathUtils.degreesToRadians;
+        defaultDirection.set(0f, -MathUtils.sin(pitchRad), -MathUtils.cos(pitchRad));
+        follow(footPosition, subjectWorldHeight, subjectPixelHeight,
+            defaultDirection, Vector3.Y);
+    }
+
+    /**
+     * Follows a subject with an explicit camera basis. The regular game camera uses the overload
+     * above; gravity surfaces use this form to look at a platform from its underside while
+     * retaining the same perspective distance and pixel-centering behavior.
+     */
+    public void follow(Vector3 footPosition, float subjectWorldHeight, float subjectPixelHeight,
+                       Vector3 direction, Vector3 up) {
         camera.fieldOfView = fovDegrees;
 
-        float pitchRad = pitchDegrees * MathUtils.degreesToRadians;
-        camera.direction.set(0f, -MathUtils.sin(pitchRad), -MathUtils.cos(pitchRad));
-        camera.up.set(Vector3.Y);
+        camera.direction.set(direction).nor();
+        camera.up.set(up).nor();
         camera.normalizeUp();
         right.set(camera.direction).crs(camera.up).nor();
 
         // Anchor the distance on the billboard's vertical centre, not its feet - under
         // perspective + pitch, those two points sit at different distances from the camera.
-        billboardCenter.set(footPosition).add(0f, subjectWorldHeight * 0.5f, 0f);
+        billboardCenter.set(footPosition).mulAdd(camera.up, subjectWorldHeight * 0.5f);
 
         halfFovRad = (camera.fieldOfView * 0.5f) * MathUtils.degreesToRadians;
         distance = (subjectWorldHeight * camera.viewportHeight)
