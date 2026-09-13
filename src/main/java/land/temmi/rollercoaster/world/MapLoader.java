@@ -14,6 +14,15 @@ public final class MapLoader {
         JsonValue root = new JsonReader().parse(file);
         int version = root.getInt("version", CURRENT_VERSION);
         if (version != CURRENT_VERSION) throw error("Unsupported version: " + version);
+        return parse(root, tileset);
+    }
+
+    /**
+     * Reads a map out of an already parsed document, so a document that holds several maps - a
+     * room folded out of walking planes, say - can carry them inline rather than by file name.
+     */
+    public LoadedMap parse(JsonValue root, Tileset tileset) {
+        if (root == null || tileset == null) throw new IllegalArgumentException("Map data and tileset are required");
         String name = requiredString(root, "name");
         JsonValue size = required(root, "size");
         if (!size.isArray() || size.size < 2) throw error("size must contain width and depth");

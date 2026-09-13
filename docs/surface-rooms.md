@@ -17,7 +17,20 @@ step, or a separate renderer.
 - `SurfaceRoom` — the platforms plus the seams between them. It implements
   `GridActor.MovementSpace`, so an actor keeps its usual speed, input cadence and walk animation.
 - `SurfaceRoomScene` — builds each plane's geometry with the normal `ChunkMesher` and places it.
+- `SurfaceRoomLoader` — reads a whole room from one document, see below.
 - `SurfaceCamera` — the framing, see below.
+
+## The document
+
+A room is authored in a single JSON file. Each entry of `planes` is an ordinary map document —
+`name`, `size`, `layers`, `props`, `entities` — plus the two fields that place it: its `gravity`
+(`floor`, `westWall`, `eastWall`, `ceiling`) and the `origin` room tile its local (0, 0) sits on.
+Props and entities therefore work on a wall exactly as they do on the ground: a prop's footprint
+becomes collision on the plane it stands on, and a room's markers — where the player arrives,
+where it leads out — are map entities, read back with `SurfaceRoom.entityTile`.
+
+Seams carry `from`/`to` room tiles and the input that crosses in each direction, plus an optional
+`step` and `count`, because the corners of a room repeat along the axis its planes share.
 
 ## Seams
 

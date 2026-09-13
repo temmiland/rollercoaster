@@ -64,6 +64,21 @@ public final class SurfaceRoom implements GridActor.MovementSpace {
 
     public List<SurfacePlatform> platforms() { return Collections.unmodifiableList(platforms); }
 
+    /**
+     * Room tile of the first entity of that type on any plane, or null. Planes carry the room's
+     * markers - where the player arrives, where it leads out - as ordinary map entities.
+     */
+    public Vector3 entityTile(String type, Vector3 out) {
+        if (type == null || out == null) throw new IllegalArgumentException("Entity type and output are required");
+        for (int i = 0; i < platforms.size(); i++) {
+            SurfacePlatform platform = platforms.get(i);
+            for (MapEntity entity : platform.map.entities) {
+                if (type.equals(entity.type)) return platform.tile(entity.x, entity.z, out);
+            }
+        }
+        return null;
+    }
+
     public SurfacePlatform platformAt(int x, int y, int z) {
         for (int i = 0; i < platforms.size(); i++) {
             if (platforms.get(i).contains(x, y, z)) return platforms.get(i);
