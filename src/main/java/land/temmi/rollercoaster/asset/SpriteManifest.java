@@ -34,6 +34,7 @@ public final class SpriteManifest {
             String id = requiredString(sprite, "id");
             float height = sprite.getFloat("height");
             float frameDuration = sprite.getFloat("frameDuration");
+            float footOffset = sprite.getFloat("footOffset", 0f);
             JsonValue directions = required(sprite, "directions");
             if (!directions.isObject()) throw error("directions must be an object for " + id);
             String[] idleRegions = new String[Facing.values().length];
@@ -58,7 +59,7 @@ public final class SpriteManifest {
             for (SpriteDefinition existing : definitions) {
                 if (existing.id.equals(id)) throw error("Duplicate sprite ID: " + id);
             }
-            definitions.add(new SpriteDefinition(id, height, frameDuration, idleRegions, walkRegions));
+            definitions.add(new SpriteDefinition(id, height, frameDuration, footOffset, idleRegions, walkRegions));
         }
         if (definitions.size == 0) throw error("sprites must not be empty");
         return new SpriteManifest(version, atlas, definitions);

@@ -15,8 +15,13 @@ public final class TextureTileset implements Disposable {
     private boolean disposed;
 
     public TextureTileset(TilesetManifest manifest) {
+        this(manifest, Gdx.files.classpath(manifest.texture));
+    }
+
+    private TextureTileset(TilesetManifest manifest, FileHandle textureFile) {
         if (manifest == null) throw new IllegalArgumentException("Tileset manifest is required");
-        atlas = new Texture(Gdx.files.classpath(manifest.texture));
+        if (textureFile == null) throw new IllegalArgumentException("Tileset texture is required");
+        atlas = new Texture(textureFile);
         atlas.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest);
         try {
             for (TileDefinition definition : manifest.tiles) {
@@ -38,12 +43,32 @@ public final class TextureTileset implements Disposable {
     }
 
     public TextureTileset(FileHandle manifestFile) {
-        this(TilesetManifest.load(manifestFile));
+        this(loadManifestFiles(manifestFile));
+    }
+
+    private TextureTileset(ManifestFiles files) {
+        this(files.manifest, files.texture);
     }
 
     public Tileset getTileset() { return tileset; }
     public Texture getAtlas() { return atlas; }
     public Material createMaterial() { return new Material(TextureAttribute.createDiffuse(atlas)); }
+
+    private static ManifestFiles loadManifestFiles(FileHandle manifestFile) {
+        if (manifestFile == null) throw new IllegalArgumentException("Tileset manifest file is required");
+        TilesetManifest manifest = TilesetManifest.load(manifestFile);
+        return new ManifestFiles(manifest, manifestFile.parent().child(manifest.texture));
+    }
+
+    private static final class ManifestFiles {
+        private final TilesetManifest manifest;
+        private final FileHandle texture;
+
+        private ManifestFiles(TilesetManifest manifest, FileHandle texture) {
+            this.manifest = manifest;
+            this.texture = texture;
+        }
+    }
 
     private void checkInside(String id, int x, int y, int width, int height) {
         if (x + width > atlas.getWidth() || y + height > atlas.getHeight()) {

@@ -1,6 +1,7 @@
 package land.temmi.rollercoaster.asset;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -13,6 +14,12 @@ public final class SpriteAtlas implements Disposable {
     public SpriteAtlas(String atlasPath) {
         if (atlasPath == null || atlasPath.length() == 0) throw new IllegalArgumentException("Atlas path is required");
         atlas = new TextureAtlas(Gdx.files.classpath(atlasPath));
+    }
+
+    /** Lets editor previews load an exported atlas from a project directory rather than the classpath. */
+    public SpriteAtlas(FileHandle atlasFile) {
+        if (atlasFile == null) throw new IllegalArgumentException("Atlas file is required");
+        atlas = new TextureAtlas(atlasFile);
     }
 
     public TextureRegion region(String name) {
