@@ -1,6 +1,7 @@
 package land.temmi.rollercoaster.asset;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import net.mgsx.gltf.loaders.glb.GLBLoader;
@@ -17,10 +18,16 @@ public final class GltfModelFactory implements ModelCatalog.Factory {
     private final ModelDefinition definition;
     private final String path;
     private final boolean binary;
+    private final FileHandle sourceFile;
     private SceneAsset asset;
     private Model model;
 
     public GltfModelFactory(ModelDefinition definition) {
+        this(definition, null);
+    }
+
+    /** Loads a model from an explicit file while retaining the manifest's format and bounds checks. */
+    public GltfModelFactory(ModelDefinition definition, FileHandle sourceFile) {
         if (definition == null) throw new IllegalArgumentException("Model definition is required");
         this.definition = definition;
         int separator = definition.source.indexOf(':');
@@ -36,14 +43,15 @@ public final class GltfModelFactory implements ModelCatalog.Factory {
         if (!path.toLowerCase().endsWith(extension)) {
             throw new IllegalArgumentException("Model source declares " + format + " but is not a " + extension + " file: " + path);
         }
+        this.sourceFile = sourceFile == null ? Gdx.files.classpath(path) : sourceFile;
     }
 
     @Override
     public Model create() {
         if (model != null) return model;
         SceneAsset loaded = binary
-            ? new GLBLoader().load(Gdx.files.classpath(path))
-            : new GLTFLoader().load(Gdx.files.classpath(path));
+            ? new GLBLoader().load(sourceFile)
+            : new GLTFLoader().load(sourceFile);
         if (loaded.scene == null || loaded.scene.model == null) {
             loaded.dispose();
             throw new IllegalArgumentException("Model has no default scene: " + path);
