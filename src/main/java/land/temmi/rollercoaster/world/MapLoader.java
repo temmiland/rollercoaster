@@ -72,7 +72,22 @@ public final class MapLoader {
             entities.add(new MapEntity(entity.getString("id", null), requiredString(entity, "type"), entity.getString("sprite", null),
                 entity.getInt("x"), entity.getInt("y", 0)));
         }
-        return new LoadedMap(name, map, props, entities);
+        Array<MapLight> lights = new Array<>();
+        JsonValue lightArray = root.get("lights");
+        if (lightArray != null) for (JsonValue light = lightArray.child; light != null; light = light.next) {
+            JsonValue color = required(light, "color");
+            if (!color.isArray() || color.size < 3) throw error("light color must have 3 components");
+            boolean spot = light.getBoolean("spot", false);
+            JsonValue direction = light.get("direction");
+            float dirX = direction == null ? 0f : direction.getFloat(0);
+            float dirY = direction == null ? -1f : direction.getFloat(1);
+            float dirZ = direction == null ? 0f : direction.getFloat(2);
+            lights.add(new MapLight(requiredString(light, "id"), light.getFloat("x"), light.getFloat("y"),
+                light.getFloat("z"), color.getFloat(0), color.getFloat(1), color.getFloat(2),
+                light.getFloat("intensity", 1f), light.getFloat("range", 4f), light.getBoolean("enabled", true),
+                spot, dirX, dirY, dirZ, light.getFloat("innerAngle", 0f), light.getFloat("outerAngle", 0f)));
+        }
+        return new LoadedMap(name, map, props, entities, lights);
     }
 
     private static JsonValue required(JsonValue parent, String key) {
