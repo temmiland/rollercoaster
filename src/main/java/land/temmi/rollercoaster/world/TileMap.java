@@ -25,7 +25,9 @@ public final class TileMap {
         if (width <= 0 || depth <= 0) throw new IllegalArgumentException("Map dimensions must be positive");
         this.width = width;
         this.depth = depth;
-        surfaces = new TileSurface[Math.multiplyExact(width, depth)];
+        long area = (long) width * depth;
+        if (area > Integer.MAX_VALUE) throw new IllegalArgumentException("Map dimensions are too large");
+        surfaces = new TileSurface[(int) area];
         heights = new float[surfaces.length];
         walkableSurfaceHeights = new float[surfaces.length];
         java.util.Arrays.fill(walkableSurfaceHeights, Float.NaN);
@@ -117,7 +119,9 @@ public final class TileMap {
     }
 
     private static void requireGridHeight(float height, TileShape shape) {
-        if (!Float.isFinite(height)) throw new IllegalArgumentException("Terrain height must be finite");
+        if (Float.isNaN(height) || Float.isInfinite(height)) {
+            throw new IllegalArgumentException("Terrain height must be finite");
+        }
         float midpoint = shape.isRamp() ? LEVEL_HEIGHT * 0.5f : 0f;
         float level = (height - midpoint) / LEVEL_HEIGHT;
         if (Math.abs(level - Math.round(level)) > HEIGHT_EPSILON) {

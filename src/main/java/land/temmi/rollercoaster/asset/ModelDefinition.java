@@ -63,7 +63,7 @@ public final class ModelDefinition {
         if (scale <= 0f || height <= 0f || boundsMinX > boundsMaxX || boundsMinY > boundsMaxY || boundsMinZ > boundsMaxZ) {
             throw new IllegalArgumentException("Invalid model dimensions: " + id);
         }
-        if (!Float.isFinite(walkHeight) || (walkable && walkHeight < 0f)) {
+        if (Float.isNaN(walkHeight) || Float.isInfinite(walkHeight) || (walkable && walkHeight < 0f)) {
             throw new IllegalArgumentException("Invalid walkable surface metadata: " + id);
         }
         this.id = id;
