@@ -91,8 +91,8 @@ public final class WorldScene implements Disposable {
 
         // Prop coordinates are grid coordinates, so tile N's centre lies at world N - 0.5.
         // Sampling there lets a prop on a ramp sit at the sloped surface instead of a tile step.
-        float worldX = prop.x + offsetX;
-        float worldZ = prop.z + offsetZ;
+        float worldX = prop.x - 0.5f + offsetX;
+        float worldZ = prop.z - 0.5f + offsetZ;
         instance.transform.setToTranslation(worldX, groundY + prop.elevation + definition.offsetY, worldZ);
         if (definition.alignToSlope) alignToSlope(instance, prop);
         instance.transform.scale(definition.scale, definition.scale, definition.scale)
