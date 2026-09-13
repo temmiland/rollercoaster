@@ -8,7 +8,7 @@ public final class LoadedMap {
     public final Array<MapProp> props;
     public final Array<MapEntity> entities;
 
-    LoadedMap(String name, TileMap tiles, Array<MapProp> props, Array<MapEntity> entities) {
+    public LoadedMap(String name, TileMap tiles, Array<MapProp> props, Array<MapEntity> entities) {
         this.name = name;
         this.tiles = tiles;
         this.props = props;

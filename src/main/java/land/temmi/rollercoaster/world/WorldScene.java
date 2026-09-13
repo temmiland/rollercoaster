@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Quaternion;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
@@ -56,6 +57,15 @@ public final class WorldScene implements Disposable {
 
     public LoadedMap getMap() { return map; }
     public Array<ModelInstance> getInstances() { return instances; }
+
+    /** Places a scene in a room; updates the same bounds used by ordinary frustum culling. */
+    public void applyTransform(Matrix4 transform) {
+        for (int i = 0; i < instances.size; i++) {
+            ModelInstance instance = instances.get(i);
+            instance.transform.mulLeft(transform);
+            instance.calculateBoundingBox(bounds.get(i)).mul(instance.transform);
+        }
+    }
 
     /** Fills {@code visible} with instances intersecting the camera frustum. */
     public Array<ModelInstance> getVisibleInstances(Camera camera, Array<ModelInstance> visible) {
