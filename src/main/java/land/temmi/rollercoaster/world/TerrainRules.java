@@ -80,7 +80,7 @@ public final class TerrainRules implements GridActor.TileAccess {
 
     @Override
     public float heightAtWorld(float worldX, float worldZ, float currentHeight) {
-        return surface.heightAt(worldX, worldZ);
+        return surface.heightAt(worldX, worldZ, currentHeight);
     }
 
     private Step step(int fromX, int fromZ, int dx, int dz, float currentHeight) {

@@ -37,10 +37,17 @@ public final class TerrainSurface {
         int x = MathUtils.clamp(tileX(worldX), 0, map.getWidth() - 1);
         int z = MathUtils.clamp(tileZ(worldZ), 0, map.getDepth() - 1);
         if (map.hasWalkableSurface(x, z)) return map.getWalkableSurfaceHeight(x, z);
-        float localX = worldX - (x - 1);
-        float localZ = worldZ - (z - 1);
-        return map.getHeight(x, z)
-            + map.getShape(x, z).surfaceOffset(MathUtils.clamp(localX, 0f, 1f), MathUtils.clamp(localZ, 0f, 1f));
+        return terrainHeightAt(x, z, worldX, worldZ);
+    }
+
+    /** Surface height nearest to a reference level at an arbitrary world position. */
+    public float heightAt(float worldX, float worldZ, float referenceHeight) {
+        int x = MathUtils.clamp(tileX(worldX), 0, map.getWidth() - 1);
+        int z = MathUtils.clamp(tileZ(worldZ), 0, map.getDepth() - 1);
+        float terrain = terrainHeightAt(x, z, worldX, worldZ);
+        if (!map.hasWalkableSurface(x, z)) return terrain;
+        float raised = map.getWalkableSurfaceHeight(x, z);
+        return Math.abs(raised - referenceHeight) < Math.abs(terrain - referenceHeight) ? raised : terrain;
     }
 
     /** Surface height at a tile's centre, which is the tile's stored height for every shape. */
@@ -68,5 +75,12 @@ public final class TerrainSurface {
         float base = map.getHeight(x, z) + map.getShape(x, z).edgeOffset(dx, dz);
         float raised = map.getWalkableSurfaceHeight(x, z);
         return Math.abs(raised - referenceHeight) < Math.abs(base - referenceHeight) ? raised : base;
+    }
+
+    private float terrainHeightAt(int x, int z, float worldX, float worldZ) {
+        float localX = worldX - (x - 1);
+        float localZ = worldZ - (z - 1);
+        return map.getHeight(x, z)
+            + map.getShape(x, z).surfaceOffset(MathUtils.clamp(localX, 0f, 1f), MathUtils.clamp(localZ, 0f, 1f));
     }
 }
