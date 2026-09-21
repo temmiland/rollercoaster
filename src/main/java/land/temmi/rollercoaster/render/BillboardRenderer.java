@@ -30,6 +30,8 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
     private final Vector3 up = new Vector3(Vector3.Y);
     private final Vector3 right = new Vector3(Vector3.X);
     private final Vector3 anchor = new Vector3();
+    private final Vector3 depthUp = new Vector3(Vector3.Y);
+    private final BillboardDepthAttribute depth = new BillboardDepthAttribute();
     private float worldHeight;
     private float aspect = 0.75f;
     private float bottomPadding;
@@ -44,7 +46,7 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
         this.region = new TextureRegion(region);
         this.worldHeight = worldHeight;
         textureAttribute = TextureAttribute.createDiffuse(texture);
-        material = new Material(textureAttribute);
+        material = new Material(textureAttribute, depth);
         applyRegion();
     }
 
@@ -64,6 +66,12 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
         }
         this.right.set(right).nor();
         this.up.set(up).nor();
+    }
+
+    /** Up axis of the standing character for occlusion; defaults to world Y, also on ramps. */
+    public void setDepthUp(Vector3 up) {
+        if (up == null || up.len2() < 0.000001f) throw new IllegalArgumentException("Depth up axis is required");
+        depthUp.set(up).nor();
     }
 
     public void setBottomPadding(float fraction) {
@@ -102,6 +110,8 @@ public final class BillboardRenderer implements RenderableProvider, Disposable {
         renderable.meshPart.set(quad.meshPart);
         renderable.material = material;
         renderable.userData = TAG;
+        depth.normal.set(right).crs(depthUp).nor();
+        depth.offset = -depth.normal.dot(center);
         // The quad's axes travel in the transform itself, so each sprite can stand on its own plane.
         anchor.set(center).mulAdd(up, -worldHeight * bottomPadding);
         float[] m = renderable.worldTransform.idt().val;

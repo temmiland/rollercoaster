@@ -4,6 +4,7 @@ uniform mat4 u_projViewTrans;
 uniform mat4 u_worldTrans;
 uniform vec2 u_targetSize;
 uniform vec4 u_uvTransform;
+uniform vec4 u_depthPlane;
 varying vec2 v_uv;
 varying vec3 v_worldPosition;
 varying vec3 v_normal;
@@ -27,9 +28,13 @@ void main() {
     vec4 clip = u_projViewTrans * vec4(worldPosition, 1.0);
     vec4 centerClip = u_projViewTrans * vec4(center, 1.0);
     vec2 centerPixels = (centerClip.xy / centerClip.w * 0.5 + 0.5) * u_targetSize;
-    centerPixels = floor(centerPixels) + 0.5;
+    centerPixels = floor(centerPixels + 0.5);
     vec2 centerNdc = centerPixels / u_targetSize * 2.0 - 1.0;
     clip.xy += (centerNdc - centerClip.xy / centerClip.w) * clip.w;
+    // Keep the snapped image intact, but test depth against the standing plane through the feet.
+    if (abs(u_depthPlane.z) > 0.00001) {
+        clip.z = -dot(u_depthPlane.xyw, clip.xyw) / u_depthPlane.z;
+    }
     gl_Position = clip;
     v_uv = a_texCoord0 * u_uvTransform.zw + u_uvTransform.xy;
 }

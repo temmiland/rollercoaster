@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g3d.Shader;
 import com.badlogic.gdx.graphics.g3d.attributes.TextureAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.RenderContext;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.utils.GdxRuntimeException;
 
 final class BillboardShader implements Shader {
@@ -19,6 +20,7 @@ final class BillboardShader implements Shader {
     private final DirectionalShadowMap shadows;
     private final LightingUniforms lightingUniforms = new LightingUniforms();
     private final ShadowUniforms shadowUniforms = new ShadowUniforms();
+    private final Matrix4 inverseProjectionView = new Matrix4();
 
     BillboardShader(LightingEnvironment lighting, DirectionalShadowMap shadows) {
         this.lighting = lighting;
@@ -45,6 +47,7 @@ final class BillboardShader implements Shader {
         this.context = context;
         program.bind();
         program.setUniformMatrix("u_projViewTrans", camera.combined);
+        inverseProjectionView.set(camera.combined).inv();
         program.setUniformf("u_targetSize", camera.viewportWidth, camera.viewportHeight);
         lightingUniforms.apply(program, lighting);
         context.setDepthTest(GL20.GL_LEQUAL);
@@ -59,6 +62,19 @@ final class BillboardShader implements Shader {
         program.setUniformMatrix("u_worldTrans", renderable.worldTransform);
         program.setUniformi("u_texture", context.textureBinder.bind(texture.textureDescription));
         program.setUniformf("u_uvTransform", texture.offsetU, texture.offsetV, texture.scaleU, texture.scaleV);
+        BillboardDepthAttribute depth = (BillboardDepthAttribute) renderable.material.get(BillboardDepthAttribute.TYPE);
+        if (depth == null) {
+            program.setUniformf("u_depthPlane", 0f, 0f, 0f, 0f);
+        } else {
+            // Planes transform by the inverse transpose, including the camera's pixel snap.
+            float[] m = inverseProjectionView.val;
+            float x = depth.normal.x, y = depth.normal.y, z = depth.normal.z, w = depth.offset;
+            program.setUniformf("u_depthPlane",
+                m[Matrix4.M00] * x + m[Matrix4.M10] * y + m[Matrix4.M20] * z + m[Matrix4.M30] * w,
+                m[Matrix4.M01] * x + m[Matrix4.M11] * y + m[Matrix4.M21] * z + m[Matrix4.M31] * w,
+                m[Matrix4.M02] * x + m[Matrix4.M12] * y + m[Matrix4.M22] * z + m[Matrix4.M32] * w,
+                m[Matrix4.M03] * x + m[Matrix4.M13] * y + m[Matrix4.M23] * z + m[Matrix4.M33] * w);
+        }
         if (shadows != null) {
             // Sprites are lit directly and do not receive the ground shadow map.
             program.setUniformi("u_shadowReceiver", 0);
