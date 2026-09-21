@@ -4,6 +4,7 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
+import com.badlogic.gdx.utils.ObjectMap;
 import java.util.Locale;
 import land.temmi.rollercoaster.event.Action;
 import land.temmi.rollercoaster.event.Condition;
@@ -74,8 +75,15 @@ public final class MapLoader {
         Array<MapEntity> entities = new Array<>();
         JsonValue entityArray = root.get("entities");
         if (entityArray != null) for (JsonValue entity = entityArray.child; entity != null; entity = entity.next) {
+            ObjectMap<String, String> properties = new ObjectMap<>();
+            JsonValue propertyValues = entity.get("properties");
+            if (propertyValues != null) {
+                for (JsonValue property = propertyValues.child; property != null; property = property.next) {
+                    properties.put(property.name, property.asString());
+                }
+            }
             entities.add(new MapEntity(entity.getString("id", null), requiredString(entity, "type"), entity.getString("sprite", null),
-                entity.getInt("x"), entity.getInt("y", 0)));
+                entity.getInt("x"), entity.getInt("y", 0), properties));
         }
         Array<MapLight> lights = new Array<>();
         JsonValue lightArray = root.get("lights");
