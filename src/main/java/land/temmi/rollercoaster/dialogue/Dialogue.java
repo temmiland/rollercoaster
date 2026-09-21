@@ -17,7 +17,10 @@ public final class Dialogue {
         }
         if (nodes == null || nodes.size == 0) throw new IllegalArgumentException("Dialogue must have at least one node: " + id);
         boolean foundStart = false;
-        for (DialogueNode node : nodes) {
+        // Index-based on purpose: Array's iterator() is not reentrant, and containsNode() below
+        // walks this same array, so nesting two enhanced-for loops over it would throw.
+        for (int i = 0; i < nodes.size; i++) {
+            DialogueNode node = nodes.get(i);
             if (node.id.equals(startNodeId)) foundStart = true;
             for (DialogueResponse response : node.responses) {
                 if (response.targetNodeId != null && !containsNode(nodes, response.targetNodeId)) {
