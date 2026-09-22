@@ -23,6 +23,7 @@ public final class PlaneCamera {
     private final Quaternion current = new Quaternion();
     private final Quaternion start = new Quaternion();
     private final Quaternion target = new Quaternion();
+    private final Quaternion wanted = new Quaternion();
     private float roll;
     private float startRoll;
     private float targetRoll;
@@ -64,17 +65,20 @@ public final class PlaneCamera {
 
     /** Ignored while already heading for the same plane, so repeated steps do not restart it. */
     public void blendTo(Vector3 planeNormal, Vector3 planeRight) {
-        orientation(planeNormal, planeRight, target);
-        float wanted = rollFor(planeNormal, target);
-        if (Math.abs(current.dot(target)) > 0.99999f && Math.abs(shortestDelta(roll, wanted)) < 0.01f) {
-            current.set(target);
-            roll = targetRoll = wanted;
+        orientation(planeNormal, planeRight, wanted);
+        float wantedRoll = rollFor(planeNormal, wanted);
+        if (blending && Math.abs(target.dot(wanted)) > 0.99999f
+            && Math.abs(shortestDelta(targetRoll, wantedRoll)) < 0.01f) return;
+        if (Math.abs(current.dot(wanted)) > 0.99999f && Math.abs(shortestDelta(roll, wantedRoll)) < 0.01f) {
+            current.set(wanted);
+            roll = targetRoll = wantedRoll;
             blending = false;
             return;
         }
+        target.set(wanted);
         start.set(current);
         startRoll = roll;
-        targetRoll = wanted;
+        targetRoll = wantedRoll;
         elapsed = 0f;
         blending = true;
     }
@@ -99,16 +103,32 @@ public final class PlaneCamera {
     public Vector3 up(Vector3 out) { return current.transform(out.set(0f, 1f, 0f)); }
 
     /**
-     * Billboard axes for a sprite standing on the current plane: the camera's own axes turned in
-     * the image plane until the sprite's up points the way the plane's normal points on screen.
-     * Under a ceiling that is half a turn, which is what hangs the sprite upside down.
+     * Billboard axes using this camera's current target plane. Call the overload with a normal
+     * when the camera is previewing a surface the sprite has not reached yet.
      */
     public void spriteBasis(Vector3 outRight, Vector3 outUp) {
+        spriteBasis(roll, outRight, outUp);
+    }
+
+    /**
+     * Billboard axes for a sprite standing on {@code planeNormal}.
+     *
+     * <p>This overload is needed while the camera previews the next surface: the sprite remains
+     * aligned to the surface it physically stands on until it starts crossing the edge.
+     */
+    public void spriteBasis(Vector3 planeNormal, Vector3 outRight, Vector3 outUp) {
+        if (planeNormal == null) throw new IllegalArgumentException("Plane normal is required");
+        // Directional sprites are pixel art, so their gravity turn intentionally stays at a
+        // clean quarter turn instead of following the camera's oblique wall projection.
+        spriteBasis(quarterTurn(rollFor(planeNormal, current)), outRight, outUp);
+    }
+
+    private void spriteBasis(float spriteRoll, Vector3 outRight, Vector3 outUp) {
         direction(direction);
         up(up);
         right.set(direction).crs(up).nor();
-        float cos = MathUtils.cosDeg(roll);
-        float sin = MathUtils.sinDeg(roll);
+        float cos = MathUtils.cosDeg(spriteRoll);
+        float sin = MathUtils.sinDeg(spriteRoll);
         outRight.set(right).scl(cos).mulAdd(up, -sin);
         outUp.set(up).scl(cos).mulAdd(right, sin);
     }
@@ -129,6 +149,8 @@ public final class PlaneCamera {
         return ((to - from + 180f) % 360f + 360f) % 360f - 180f;
     }
 
+    private static float quarterTurn(float degrees) { return Math.round(degrees / 90f) * 90f; }
+
     private void orientation(Vector3 planeNormal, Vector3 planeRight, Quaternion out) {
         if (planeNormal == null || planeRight == null) throw new IllegalArgumentException("Plane normal and right axis are required");
         // Looking against the plane's right axis puts screen right on it, whatever the plane is.
@@ -138,9 +160,11 @@ public final class PlaneCamera {
         // on its side, while the climbing axis still runs straight up the screen.
         heading.set(horizontal).add(DEFAULT_HEADING);
         if (heading.len2() > 0.0001f) horizontal.set(heading).nor();
-        // The pitch follows how much the plane faces up: down onto the ground, up under a
-        // ceiling, and level at a wall, whose face needs neither.
-        float pitch = pitchDegrees * planeNormal.y * MathUtils.degreesToRadians;
+        // Side walls retain the ordinary downward pitch. Crossing left or right consequently
+        // turns the view around the subject instead of dropping it to a level-on-wall view.
+        // Only the ceiling reverses the pitch so it is still viewed from its free side.
+        float pitch = (planeNormal.y < -0.5f ? -pitchDegrees : pitchDegrees)
+            * MathUtils.degreesToRadians;
         direction.set(horizontal).scl(MathUtils.cos(pitch)).add(0f, -MathUtils.sin(pitch), 0f).nor();
         up.set(Vector3.Y).mulAdd(direction, -Vector3.Y.dot(direction)).nor();
         right.set(direction).crs(up).nor();

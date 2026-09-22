@@ -61,6 +61,19 @@ public class PixelCamera {
      */
     public void follow(Vector3 footPosition, float subjectWorldHeight, float subjectPixelHeight,
                        Vector3 direction, Vector3 up) {
+        follow(footPosition, subjectWorldHeight, subjectPixelHeight, direction, up, up);
+    }
+
+    /**
+     * Follows a subject whose visible height can run along an axis different from the camera's
+     * up direction. A folded-world sprite on a wall, for example, stands sideways in the image;
+     * centring it along world-up would make the view slip below it.
+     */
+    public void follow(Vector3 footPosition, float subjectWorldHeight, float subjectPixelHeight,
+                       Vector3 direction, Vector3 up, Vector3 subjectUp) {
+        if (subjectUp == null || subjectUp.len2() < 0.000001f) {
+            throw new IllegalArgumentException("Subject up axis is required");
+        }
         camera.fieldOfView = fovDegrees;
 
         camera.direction.set(direction).nor();
@@ -68,9 +81,9 @@ public class PixelCamera {
         camera.normalizeUp();
         right.set(camera.direction).crs(camera.up).nor();
 
-        // Anchor the distance on the billboard's vertical centre, not its feet - under
-        // perspective + pitch, those two points sit at different distances from the camera.
-        billboardCenter.set(footPosition).mulAdd(camera.up, subjectWorldHeight * 0.5f);
+        // Anchor the distance on the billboard's visual centre, not its feet. On a wall that
+        // centre moves along the sprite's sideways up axis rather than along world-up.
+        billboardCenter.set(footPosition).mulAdd(subjectUp, subjectWorldHeight * 0.5f);
 
         halfFovRad = (camera.fieldOfView * 0.5f) * MathUtils.degreesToRadians;
         distance = (subjectWorldHeight * camera.viewportHeight)

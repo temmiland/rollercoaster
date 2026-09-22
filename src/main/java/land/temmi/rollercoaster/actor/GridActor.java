@@ -91,6 +91,12 @@ public final class GridActor {
      */
     public boolean didStep() { return stepped; }
     public int getTileY() { return tileY; }
+    /** Tile occupied at the start of the current 3D-grid step. */
+    public int getFromTileX() { return fromX; }
+    public int getFromTileY() { return fromY; }
+    public int getFromTileZ() { return fromZ; }
+    /** Completion of the current step, from zero at takeoff to one on arrival. */
+    public float getStepProgress() { return progress; }
 
     public GridActor(int width, int depth, float speed) {
         if (width <= 0 || depth <= 0 || speed <= 0f) throw new IllegalArgumentException("Invalid actor bounds or speed");

@@ -87,6 +87,17 @@ public final class FoldedMap implements GridActor.MovementSpace {
     }
 
     /**
+     * The plane reached by an allowed step only when that step leaves the current plane.
+     * Useful for showing an impending crossing before the actor takes it.
+     */
+    public MapPlane crossingDestination(int x, int y, int z, MoveIntent input) {
+        MapPlane current = planeAt(x, y, z);
+        if (current == null || !tryStep(x, y, z, input, scratch)) return null;
+        MapPlane destination = planeAt(round(scratch.x), round(scratch.y), round(scratch.z));
+        return destination == current ? null : destination;
+    }
+
+    /**
      * Links two world tiles in both directions. Each direction carries its own input, because the
      * step that leaves a plane and the step that returns are expressed in different planes.
      */
