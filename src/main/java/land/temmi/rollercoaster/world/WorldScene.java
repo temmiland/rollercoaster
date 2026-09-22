@@ -35,8 +35,21 @@ public final class WorldScene implements Disposable {
     private final TerrainSurface surface;
 
     public WorldScene(LoadedMap map, Array<Model> chunks, ModelCatalog modelCatalog) {
-        if (map == null || chunks == null || modelCatalog == null) {
-            throw new IllegalArgumentException("Map, chunks, and model catalog are required");
+        this(map, chunks, modelCatalog, java.util.Collections.emptySet());
+    }
+
+    /**
+     * {@code notOwnedByThisScene} marks chunk models this scene did not itself build - reused from
+     * another WorldScene rather than freshly meshed, the way an incremental chunk update does. If
+     * construction fails (most likely while placing a prop, which runs after every chunk model is
+     * already accepted into {@code chunks}), the failure cleanup below must not dispose those: some
+     * other, still-current WorldScene still owns and needs them. Disposing a shared Model here would
+     * corrupt that other scene too, since it is the exact same GPU-backed object, not a copy.
+     */
+    public WorldScene(LoadedMap map, Array<Model> chunks, ModelCatalog modelCatalog,
+                      java.util.Set<Model> notOwnedByThisScene) {
+        if (map == null || chunks == null || modelCatalog == null || notOwnedByThisScene == null) {
+            throw new IllegalArgumentException("Map, chunks, model catalog and notOwnedByThisScene are required");
         }
         this.map = map;
         this.chunks = chunks;
@@ -50,7 +63,7 @@ public final class WorldScene implements Disposable {
             }
             for (MapProp prop : map.props) addProp(prop);
         } catch (RuntimeException failure) {
-            disposeChunks();
+            disposeExcept(notOwnedByThisScene);
             throw failure;
         }
     }
@@ -166,6 +179,23 @@ public final class WorldScene implements Disposable {
     @Override
     public void dispose() {
         disposeChunks();
+    }
+
+    /**
+     * Disposes every chunk model except the ones in {@code keepAlive}, then clears this scene's
+     * bookkeeping same as {@link #dispose}. For a caller building a replacement scene that reuses
+     * some of this scene's unchanged chunk models to avoid remeshing them - those must not be
+     * disposed here, since the replacement now owns them. Every other caller should keep using
+     * the plain {@link #dispose}.
+     */
+    public void disposeExcept(java.util.Set<Model> keepAlive) {
+        if (keepAlive == null) throw new IllegalArgumentException("keepAlive is required (pass an empty set, not null)");
+        for (Model chunk : chunks) {
+            if (!keepAlive.contains(chunk)) chunk.dispose();
+        }
+        chunks.clear();
+        instances.clear();
+        bounds.clear();
     }
 
     private void disposeChunks() {
