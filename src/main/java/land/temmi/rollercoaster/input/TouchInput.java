@@ -25,6 +25,12 @@ public final class TouchInput implements InputSource {
         return this;
     }
 
+    /** Normalized (0-1) screen position of the D-pad center; exposed so a renderer can match it. */
+    public float getCenterX() { return centerX; }
+    public float getCenterY() { return centerY; }
+    public float getRadius() { return radius; }
+    public float getDeadZone() { return deadZone; }
+
     @Override
     public MoveIntent pollMove() {
         if (!Gdx.input.isTouched()) return MoveIntent.NONE;
