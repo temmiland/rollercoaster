@@ -47,15 +47,7 @@ public final class ChunkMesher {
                 for (int x0 = 0; x0 < map.getWidth(); x0 += CHUNK_SIZE) {
                     ModelBuilder builder = new ModelBuilder();
                     builder.begin();
-                    MeshPartBuilder mesh = null;
-                    for (int z = z0; z < Math.min(z0 + CHUNK_SIZE, map.getDepth()); z++) {
-                        for (int x = x0; x < Math.min(x0 + CHUNK_SIZE, map.getWidth()); x++) {
-                            if (map.getSurface(x, z) == null) continue;
-                            if (mesh == null) mesh = builder.part("chunk-" + x0 + "-" + z0,
-                                GL20.GL_TRIANGLES, ATTRIBUTES, material);
-                            appendTile(mesh, map, x, z);
-                        }
-                    }
+                    MeshPartBuilder mesh = appendChunk(builder, map, material, x0, z0);
                     Model chunk = builder.end();
                     if (mesh == null) chunk.dispose();
                     else chunks.add(chunk);
@@ -66,6 +58,39 @@ public final class ChunkMesher {
             for (Model chunk : chunks) chunk.dispose();
             throw failure;
         }
+    }
+
+    /**
+     * Rebuilds a single chunk at grid origin (x0, z0) - the exact same geometry {@link #build}
+     * would produce there, since both share {@link #appendChunk}. Returns null if the chunk has
+     * no painted tiles, matching build()'s convention of omitting empty chunks rather than
+     * returning a zero-triangle model. Lets a caller remesh just the chunks a small edit actually
+     * touched instead of every chunk in the map.
+     */
+    public Model buildChunk(TileMap map, Material material, int x0, int z0) {
+        if (map == null || material == null) throw new IllegalArgumentException("Map and material are required");
+        ModelBuilder builder = new ModelBuilder();
+        builder.begin();
+        MeshPartBuilder mesh = appendChunk(builder, map, material, x0, z0);
+        Model chunk = builder.end();
+        if (mesh == null) {
+            chunk.dispose();
+            return null;
+        }
+        return chunk;
+    }
+
+    private MeshPartBuilder appendChunk(ModelBuilder builder, TileMap map, Material material, int x0, int z0) {
+        MeshPartBuilder mesh = null;
+        for (int z = z0; z < Math.min(z0 + CHUNK_SIZE, map.getDepth()); z++) {
+            for (int x = x0; x < Math.min(x0 + CHUNK_SIZE, map.getWidth()); x++) {
+                if (map.getSurface(x, z) == null) continue;
+                if (mesh == null) mesh = builder.part("chunk-" + x0 + "-" + z0,
+                    GL20.GL_TRIANGLES, ATTRIBUTES, material);
+                appendTile(mesh, map, x, z);
+            }
+        }
+        return mesh;
     }
 
     private void appendTile(MeshPartBuilder mesh, TileMap map, int x, int z) {
