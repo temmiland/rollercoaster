@@ -1,5 +1,6 @@
 package land.temmi.rollercoaster.asset;
 
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.utils.ObjectMap;
 
@@ -23,6 +24,17 @@ public final class ModelCatalog {
     }
 
     private final ObjectMap<String, Entry> entries = new ObjectMap<>();
+
+    /** Registers every model of a manifest, with sources resolved against the manifest's directory. */
+    public static ModelCatalog load(FileHandle manifestFile) {
+        ModelCatalog catalog = new ModelCatalog();
+        FileHandle directory = manifestFile.parent();
+        for (ModelDefinition definition : ModelManifest.load(manifestFile)) {
+            String path = definition.source.substring(definition.source.indexOf(':') + 1);
+            catalog.register(definition, new GltfModelFactory(definition, directory.child(path)));
+        }
+        return catalog;
+    }
 
     public ModelCatalog register(ModelDefinition definition, Factory factory) {
         if (definition == null || factory == null) throw new IllegalArgumentException("Model definition and factory are required");

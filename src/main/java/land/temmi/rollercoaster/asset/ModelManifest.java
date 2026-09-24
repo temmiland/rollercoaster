@@ -5,7 +5,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 
-/** Reflection-free parser for model placement metadata. */
+/** Reflection-free parser for model placement metadata. Sources are relative to the manifest's directory. */
 public final class ModelManifest {
     public static final int CURRENT_VERSION = 1;
 

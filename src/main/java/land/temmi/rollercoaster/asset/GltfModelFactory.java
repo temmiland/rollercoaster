@@ -1,6 +1,5 @@
 package land.temmi.rollercoaster.asset;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.math.collision.BoundingBox;
@@ -22,13 +21,10 @@ public final class GltfModelFactory implements ModelCatalog.Factory {
     private SceneAsset asset;
     private Model model;
 
-    public GltfModelFactory(ModelDefinition definition) {
-        this(definition, null);
-    }
-
-    /** Loads a model from an explicit file while retaining the manifest's format and bounds checks. */
+    /** {@code sourceFile} is the definition's source resolved against its manifest's directory. */
     public GltfModelFactory(ModelDefinition definition, FileHandle sourceFile) {
         if (definition == null) throw new IllegalArgumentException("Model definition is required");
+        if (sourceFile == null) throw new IllegalArgumentException("Model source file is required: " + definition.id);
         this.definition = definition;
         int separator = definition.source.indexOf(':');
         if (separator < 0) throw new IllegalArgumentException("Model source needs a gltf: or glb: prefix: " + definition.source);
@@ -43,7 +39,7 @@ public final class GltfModelFactory implements ModelCatalog.Factory {
         if (!path.toLowerCase().endsWith(extension)) {
             throw new IllegalArgumentException("Model source declares " + format + " but is not a " + extension + " file: " + path);
         }
-        this.sourceFile = sourceFile == null ? Gdx.files.classpath(path) : sourceFile;
+        this.sourceFile = sourceFile;
     }
 
     @Override

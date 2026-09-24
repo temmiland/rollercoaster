@@ -1,6 +1,5 @@
 package land.temmi.rollercoaster.world;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -13,10 +12,6 @@ public final class TextureTileset implements Disposable {
     private final Texture atlas;
     private final Tileset tileset = new Tileset();
     private boolean disposed;
-
-    public TextureTileset(TilesetManifest manifest) {
-        this(manifest, Gdx.files.classpath(manifest.texture));
-    }
 
     private TextureTileset(TilesetManifest manifest, FileHandle textureFile) {
         if (manifest == null) throw new IllegalArgumentException("Tileset manifest is required");

@@ -5,7 +5,7 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 
-/** Reflection-free parser for editor-exported tileset metadata. */
+/** Reflection-free parser for editor-exported tileset metadata. The texture is relative to the manifest. */
 public final class TilesetManifest {
     public static final int CURRENT_VERSION = 1;
 

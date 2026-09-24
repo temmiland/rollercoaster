@@ -7,7 +7,7 @@ import com.badlogic.gdx.utils.JsonValue;
 import java.util.Locale;
 import land.temmi.rollercoaster.actor.Facing;
 
-/** Reflection-free parser for editor-exported directional sprite metadata. */
+/** Reflection-free parser for editor-exported directional sprite metadata. The atlas is relative to the manifest. */
 public final class SpriteManifest {
     public static final int CURRENT_VERSION = 1;
 
